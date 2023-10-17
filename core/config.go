@@ -7,11 +7,9 @@ import (
 )
 
 type BuildTarget struct {
-	Entrance string
 	Platform string
 	Arch     string
 	Rule     ReplaceRule
-	Output   string
 }
 
 func (bt BuildTarget) Tag() string {
@@ -19,7 +17,9 @@ func (bt BuildTarget) Tag() string {
 }
 
 type Config struct {
-	Targets []BuildTarget
+	Targets  []BuildTarget
+	Entrance string
+	Output   string
 }
 
 func LoadConfig(filePath, recipeName string) (Config, error) {

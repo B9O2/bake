@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 func CopyDirectory(source, destination string) error {
@@ -59,16 +58,6 @@ func copyFile(source, destination string, mode os.FileMode) error {
 	}
 
 	err = destFile.Chmod(mode)
-	if err != nil {
-		return err
-	}
-
-	sourceInfo, err := os.Stat(source)
-	if err != nil {
-		return err
-	}
-
-	err = os.Chown(destination, int(sourceInfo.Sys().(*syscall.Stat_t).Uid), int(sourceInfo.Sys().(*syscall.Stat_t).Gid))
 	if err != nil {
 		return err
 	}

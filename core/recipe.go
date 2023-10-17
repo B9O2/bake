@@ -2,8 +2,10 @@ package core
 
 import (
 	_ "embed"
-	"fmt"
-	"gitlab.huaun.com/lr/filefinder"
+	"errors"
+
+	//. "github.com/B9O2/Inspector/templates/simple"
+	"github.com/B9O2/filefinder"
 	"strings"
 )
 
@@ -78,6 +80,7 @@ func (p ArchOption) AllArchOption() Options {
 
 type Recipe struct {
 	Entrance    string     `toml:"entrance"`
+	Output      string     `toml:"output"`
 	Pairs       []string   `toml:"pairs"`
 	AllPlatform ArchOption `toml:"all_platform"`
 	Darwin      ArchOption `toml:"darwin"`
@@ -110,9 +113,6 @@ func (r Recipe) ToConfig() (Config, error) {
 				mid[platform][midArch] = midOption.Patch(opt)
 			}
 		}
-
-		fmt.Println("Platform <", platform, ">Option:", ao)
-
 		ao.Range(func(arch string, option Options) bool {
 			if _, ok := mid[platform][arch]; ok {
 				midOption := mid[platform][arch]
@@ -134,12 +134,22 @@ func (r Recipe) ToConfig() (Config, error) {
 			cfg.Targets = append(cfg.Targets, BuildTarget{
 				Platform: platform,
 				Arch:     arch,
-				Entrance: r.Entrance,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
 			})
 		}
 	}
 
+	if r.Entrance == "" {
+		return cfg, errors.New("no entrance")
+	} else {
+		cfg.Entrance = r.Entrance
+	}
+
+	if r.Output == "" {
+		cfg.Output = "bake_out"
+	} else {
+		cfg.Output = r.Output
+	}
 	return cfg, nil
 }
 

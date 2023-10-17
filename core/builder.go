@@ -3,9 +3,10 @@ package core
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"gitlab.huaun.com/lr/filefinder"
-	Executor "gitlab.huaun.com/lr/utils/ExecManager"
+	Executor "github.com/B9O2/ExecManager"
+	"github.com/B9O2/Inspector/decorators"
+	. "github.com/B9O2/Inspector/templates/simple"
+	"github.com/B9O2/filefinder"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -18,17 +19,18 @@ type ReplaceRule struct {
 	Range             *filefinder.SearchRule
 }
 
-type Builder struct {
+type GoBuilder struct {
 	executorPath            string
 	exec                    *Executor.Manager
 	projectPath, shadowPath string
 }
 
-func (b *Builder) BuildProject(entrance, platform, arch, dest string) error {
+// BuildProject 在影子目录中构建
+func (gb *GoBuilder) BuildProject(entrance, platform, arch, dest string) error {
 	os.Setenv("CGO_ENABLED", "0")
 	os.Setenv("GOOS", platform)
 	os.Setenv("GOARCH", arch)
-	pid, err := b.exec.NewProcess(b.executorPath, []string{
+	pid, err := gb.exec.NewProcess(gb.executorPath, []string{
 		"build",
 		"-trimpath",
 		"-ldflags",
@@ -36,21 +38,23 @@ func (b *Builder) BuildProject(entrance, platform, arch, dest string) error {
 		"-o",
 		dest,
 		entrance,
-	}, b.shadowPath)
+	}, gb.shadowPath)
 	if err != nil {
 		return err
 	}
 
 	allStderr := ""
 	for {
-		stdout, stderr, err := b.exec.FetchAll(pid)
+		stdout, stderr, err := gb.exec.FetchAll(pid)
 		if err != nil {
 			break
 		}
-		fmt.Print(string(stdout))
+		Insp.Print(Text(string(stdout)))
 		allStderr += string(stderr)
 	}
-	fmt.Println("BUILD DETAIL ERR:", allStderr)
+	if len(allStderr) > 0 {
+		Insp.Print(Text("BUILD DETAIL ERR"), Text(allStderr, decorators.Red))
+	}
 	err = nil
 	if strings.Contains(allStderr, "no Go files in") {
 		err = errors.New("entrance error")
@@ -60,52 +64,27 @@ func (b *Builder) BuildProject(entrance, platform, arch, dest string) error {
 	return err
 }
 
-func (b *Builder) GoVendor(replaceRule ReplaceRule) error {
-	fmt.Println("bake: Run go mod vendor @ ", b.shadowPath)
-	pid, err := b.exec.NewProcess("go", []string{"mod", "vendor"}, b.shadowPath)
-	if err != nil {
-		return err
-	}
-	stdout, stderr, err := b.exec.WaitOutput(pid)
-	if err != nil {
-		return err
-	}
-	fmt.Println("OUT:", string(stdout))
-	fmt.Println("ERR:", string(stderr))
-	if len(stderr) > 0 {
-		if strings.Contains(string(stderr), "go.mod file not found") {
-			return errors.New("bake: It seems not a go project")
-		} else {
-			return errors.New("bake: vendor error")
-		}
-	}
-
-	for oldDependency, newDependency := range replaceRule.DependencyReplace {
-		err := os.Rename(filepath.Join(b.shadowPath, "vendor", oldDependency), filepath.Join(b.shadowPath, "vendor", newDependency))
-		if err != nil {
-			fmt.Println(">> rename dependency error ", err)
-		}
-	}
-
+// FileReplace 对影子目录中的文件内容进行替换
+func (gb *GoBuilder) FileReplace(replacement map[string]string, replaceRange *filefinder.SearchRule) error {
 	//Replace Range
 	var files []string
-	if replaceRule.Range != nil {
-		db, err := filefinder.NewFileDB(b.shadowPath)
+	if replaceRange != nil {
+		db, err := filefinder.NewFileDB(gb.shadowPath)
 		if err != nil {
 			return err
 		}
-		files = db.Search([]filefinder.SearchRule{*replaceRule.Range})["OvO"]
+		files = db.Search([]filefinder.SearchRule{*replaceRange})["OvO"]
 		for _, filePath := range files {
 			content, _ := os.ReadFile(filePath)
-			for oldWord, newWord := range replaceRule.ReplacementWords {
+			for oldWord, newWord := range replacement {
 				content = bytes.Replace(content, []byte(oldWord), []byte(newWord), -1)
 			}
 			_ = os.WriteFile(filePath, content, 0666)
 		}
 	} else {
-		err := filepath.WalkDir(b.shadowPath, func(filePath string, d fs.DirEntry, err error) error {
+		err := filepath.WalkDir(gb.shadowPath, func(filePath string, d fs.DirEntry, err error) error {
 			content, _ := os.ReadFile(filePath)
-			for oldWord, newWord := range replaceRule.ReplacementWords {
+			for oldWord, newWord := range replacement {
 				content = bytes.Replace(content, []byte(oldWord), []byte(newWord), -1)
 			}
 			_ = os.WriteFile(filePath, content, 0666)
@@ -115,34 +94,69 @@ func (b *Builder) GoVendor(replaceRule ReplaceRule) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// GoVendor 对影子项目进行本地化依赖处理，在此过程中可以对依赖进行修改
+func (gb *GoBuilder) GoVendor(replacement map[string]string) error {
+	pid, err := gb.exec.NewProcess(gb.executorPath, []string{"mod", "vendor"}, gb.shadowPath)
+	if err != nil {
+		return err
+	}
+	stdout, stderr, err := gb.exec.WaitOutput(pid)
+	if err != nil {
+		return err
+	}
+	if len(stdout) > 0 {
+		Insp.Print(Text(stdout, decorators.Cyan))
+	}
+	if len(stderr) > 0 {
+		Insp.Print(Text(stderr, decorators.Red))
+	}
+
+	if len(stderr) > 0 {
+		if strings.Contains(string(stderr), "go.mod file not found") {
+			return errors.New("bake: It seems not a go project")
+		} else {
+			return errors.New("bake: vendor error")
+		}
+	}
+
+	for oldDependency, newDependency := range replacement {
+		err = os.Rename(filepath.Join(gb.shadowPath, "vendor", oldDependency), filepath.Join(gb.shadowPath, "vendor", newDependency))
+		if err != nil {
+
+		}
+	}
 
 	return nil
 }
 
-func (b *Builder) duplicate(dest string) error {
-	fmt.Println("bake: Copy project")
-	return CopyDirectory(b.projectPath, dest)
+// duplicate 复制当前项目至
+func (gb *GoBuilder) duplicate(dest string) error {
+	return CopyDirectory(gb.projectPath, dest)
 }
 
-func (b *Builder) ShadowPath() string {
-	return b.shadowPath
+func (gb *GoBuilder) ShadowPath() string {
+	return gb.shadowPath
 }
-func (b *Builder) ProjectPath() string {
-	return b.projectPath
+func (gb *GoBuilder) ProjectPath() string {
+	return gb.projectPath
 }
 
-func (b *Builder) Close() {
-	if b.shadowPath != "" {
-		os.RemoveAll(b.shadowPath)
+func (gb *GoBuilder) Close() {
+	if gb.shadowPath != "" {
+		os.RemoveAll(gb.shadowPath)
 	}
 }
 
-func NewBuilder(projectPath, executorPath string) (*Builder, error) {
+// NewGoProjectBuilder Go项目构建器，初始化构建器后会复制项目至影子目录（默认临时目录）
+func NewGoProjectBuilder(projectPath, executorPath string) (*GoBuilder, error) {
 	projectPath, err := filepath.Abs(projectPath)
 	if err != nil {
 		return nil, err
 	}
-	b := &Builder{
+	b := &GoBuilder{
 		executorPath: executorPath,
 		exec:         Executor.NewManager("exec"),
 		projectPath:  projectPath,

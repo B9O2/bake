@@ -3,62 +3,75 @@ package main
 import (
 	"ShadowProject/core"
 	"fmt"
+	"github.com/B9O2/Inspector/decorators"
+	. "github.com/B9O2/Inspector/templates/simple"
 	"os"
 	"path/filepath"
 )
 
-func BuildOne(target core.BuildTarget) error {
-	b, err := core.NewBuilder(".", "go")
+func BuildOne(target core.BuildTarget, entrance, output string) error {
+	b, err := core.NewGoProjectBuilder(".", "go")
 	if err != nil {
 		return err
 	}
 	defer func() {
 		b.Close()
-		fmt.Println("bake: Temp cleaned")
+		Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
 	}()
-	fmt.Println("[v]Shadow Project has been generated at '" + b.ShadowPath() + "'")
-	out := filepath.Join(b.ProjectPath(), "bake_bin", target.Tag())
-	if target.Output != "" {
-		out = target.Output
-	}
-	if err := b.GoVendor(target.Rule); err != nil {
+	Insp.Print(Text("Shadow Project"), Path(b.ShadowPath()))
+	out := filepath.Join(b.ProjectPath(), output, target.Tag())
+	if err = b.GoVendor(target.Rule.DependencyReplace); err != nil {
+		Insp.Print(Error(err))
 		return err
 	}
-	err = b.BuildProject(target.Entrance, target.Platform, target.Arch, out)
+	if err = b.FileReplace(target.Rule.ReplacementWords, target.Rule.Range); err != nil {
+		Insp.Print(Error(err))
+		return err
+	}
+	err = b.BuildProject(entrance, target.Platform, target.Arch, out)
 	if err != nil {
 		return err
 	} else {
-		fmt.Println("[v]Build Successfully:", out)
+		Insp.Print(Text("Build Successfully", decorators.Green), Text(out))
 	}
 	return nil
 }
 
 func main() {
 	defer func() {
-		fmt.Println("bake: Finished")
+		Insp.Print(Text("Finished", decorators.Magenta))
 	}()
 	var recipes []string
 	if len(os.Args) > 1 {
-		recipes = os.Args[1 : len(os.Args)-1]
+		recipes = os.Args[1:]
 	} else {
 		recipes = []string{"default"}
 	}
 	for _, recipe := range recipes {
+		Insp.Print(Text("Follow Recipe"), Text(recipe, decorators.Magenta))
 		config, err := core.LoadConfig("./RECIPE.toml", recipe)
 		if err != nil {
-			fmt.Println("bake:" + err.Error())
+			Insp.Print(Error(err))
 			return
 		}
-
-		fmt.Println("TARGETS:", config.Targets)
-
+		Insp.Print(Text("Entrance"), Text(config.Entrance, decorators.Blue))
 		for _, target := range config.Targets {
-			fmt.Println("NowTarget:", target)
-			err := BuildOne(target)
+			Insp.Print(Text("Build Target"), Text(target.Tag(), decorators.Yellow))
+			err = BuildOne(target, config.Entrance, config.Output)
 			if err != nil {
-				fmt.Println("[x]Build Error:", err)
+				Insp.Print(Error(err))
 				continue
 			}
 		}
 	}
+}
+
+func init() {
+	Insp.SetTypeDecorations("_func", decorators.Invisible)
+	Insp.NewAutoType("id", func() interface{} {
+		return ":bake:"
+	}, func(i interface{}) string {
+		return fmt.Sprint(i)
+	}, decorators.Gray)
+	Insp.SetOrders("_time", Level, "id")
 }

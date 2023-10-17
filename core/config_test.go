@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
-	config, err := LoadConfig("/Users/restr0/Projects/HuaunProjects/botDefinger/RECIPE.toml", "default")
+	config, err := LoadConfig("./RECIPE.toml", "default")
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -15,14 +15,13 @@ func TestLoadConfig(t *testing.T) {
 		for _, t := range config.Targets {
 			fmt.Println(t.Tag())
 			fmt.Println(t.Rule)
-			fmt.Println(t.Entrance)
 		}
 	}
 }
 
 func TestLoadRecipeDoc(t *testing.T) {
 	doc := RecipeDoc{}
-	_, err := toml.DecodeFile("/Users/restr0/Projects/HuaunProjects/botDefinger/RECIPE.toml", &doc)
+	_, err := toml.DecodeFile("./RECIPE.toml", &doc)
 
 	if err != nil {
 		fmt.Println(err)

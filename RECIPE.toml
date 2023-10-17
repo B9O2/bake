@@ -1,0 +1,14 @@
+# bake
+[recipes.default] #默认编译配置，会在不提供配置名时默认执行
+# 必要参数
+entrance="./" #编译入口，此处指定为当前目录
+# 非必要参数
+output="./bin" #编译输出目录
+all_platform.all_arch.replace.text."google" = "apple" #替换代码文件内容
+all_platform.all_arch.replace.dependency."gitlab.google.com" = "gitlab.apple.com" #替换依赖名
+#|___平台___||__架构__||__操作__||_操作子项_|
+
+[recipes.my_recipe]
+entrance="./"
+output="./my_bin"
+pairs = ["darwin/arm64","windows/386"] #编译darwin/arm64和windows/386
