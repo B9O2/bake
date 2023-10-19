@@ -1,23 +1,40 @@
 package core
 
 import (
+	"bake/core/remotes"
 	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"path/filepath"
 )
 
-type BuildTarget struct {
+type BuildPair struct {
+	fileName string
 	Platform string
 	Arch     string
 	Rule     ReplaceRule
+	Remote   remotes.RemoteTarget
 }
 
-func (bt BuildTarget) Tag() string {
-	return fmt.Sprintf("%s_%s", bt.Platform, bt.Arch)
+func (bp BuildPair) Tag() string {
+	return fmt.Sprintf("%s_%s", bp.Platform, bp.Arch)
+}
+
+func (bp BuildPair) Name() string {
+	name := ""
+	if bp.fileName != "" {
+		name = bp.fileName
+	} else {
+		name = bp.Tag()
+	}
+	if bp.Platform == "windows" && filepath.Ext(name) != ".exe" {
+		name += ".exe"
+	}
+	return name
 }
 
 type Config struct {
-	Targets  []BuildTarget
+	Targets  []BuildPair
 	Entrance string
 	Output   string
 }

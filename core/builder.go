@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bake/core/utils"
 	"bytes"
 	"errors"
 	Executor "github.com/B9O2/ExecManager"
@@ -20,48 +21,52 @@ type ReplaceRule struct {
 }
 
 type GoBuilder struct {
+	dev                     bool
 	executorPath            string
 	exec                    *Executor.Manager
 	projectPath, shadowPath string
+	hashTag                 string
 }
 
 // BuildProject 在影子目录中构建
-func (gb *GoBuilder) BuildProject(entrance, platform, arch, dest string) error {
-	os.Setenv("CGO_ENABLED", "0")
-	os.Setenv("GOOS", platform)
-	os.Setenv("GOARCH", arch)
-	pid, err := gb.exec.NewProcess(gb.executorPath, []string{
-		"build",
+func (gb *GoBuilder) BuildProject(entrance, output string, pair BuildPair) (string, error) {
+	shadowOutput := filepath.Join("./shadow_bin", pair.Name())
+	cmd := gb.executorPath
+	args := []string{ //不指定一定使用build
 		"-trimpath",
 		"-ldflags",
 		"-w -s",
 		"-o",
-		dest,
+		shadowOutput,
 		entrance,
-	}, gb.shadowPath)
+	}
+	err := pair.Remote.Connect()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	allStderr := ""
-	for {
-		stdout, stderr, err := gb.exec.FetchAll(pid)
-		if err != nil {
-			break
+	if !gb.dev {
+		defer pair.Remote.Close()
+	}
+
+	err = pair.Remote.CopyShadowProjectTo(gb.shadowPath)
+	if err != nil {
+		return "", err
+	}
+	_, stderr, err := pair.Remote.BuildExec(cmd, args)
+	if err != nil {
+		return "", err
+	}
+	if len(stderr) > 0 {
+		if bytes.Contains(stderr, []byte("no Go files in")) {
+			err = errors.New("entrance error")
+		} else {
+			err = errors.New(string(stderr))
 		}
-		Insp.Print(Text(string(stdout)))
-		allStderr += string(stderr)
+		return "", err
 	}
-	if len(allStderr) > 0 {
-		Insp.Print(Text("BUILD DETAIL ERR"), Text(allStderr, decorators.Red))
-	}
-	err = nil
-	if strings.Contains(allStderr, "no Go files in") {
-		err = errors.New("entrance error")
-	} else if len(allStderr) > 0 {
-		err = errors.New("unknown build error")
-	}
-	return err
+	err = pair.Remote.CopyFileBack(shadowOutput, output)
+	return filepath.Join(output, pair.Name()), err
 }
 
 // FileReplace 对影子目录中的文件内容进行替换
@@ -134,7 +139,7 @@ func (gb *GoBuilder) GoVendor(replacement map[string]string) error {
 
 // duplicate 复制当前项目至
 func (gb *GoBuilder) duplicate(dest string) error {
-	return CopyDirectory(gb.projectPath, dest)
+	return utils.CopyDirectory(gb.projectPath, dest)
 }
 
 func (gb *GoBuilder) ShadowPath() string {
@@ -145,26 +150,26 @@ func (gb *GoBuilder) ProjectPath() string {
 }
 
 func (gb *GoBuilder) Close() {
-	if gb.shadowPath != "" {
-		os.RemoveAll(gb.shadowPath)
+	if gb.shadowPath != "" && !gb.dev {
+		os.RemoveAll(filepath.Join(gb.shadowPath, ".."))
 	}
 }
 
 // NewGoProjectBuilder Go项目构建器，初始化构建器后会复制项目至影子目录（默认临时目录）
-func NewGoProjectBuilder(projectPath, executorPath string) (*GoBuilder, error) {
+func NewGoProjectBuilder(projectPath, executorPath string, dev bool) (*GoBuilder, error) {
 	projectPath, err := filepath.Abs(projectPath)
 	if err != nil {
 		return nil, err
 	}
 	b := &GoBuilder{
+		dev:          dev,
 		executorPath: executorPath,
 		exec:         Executor.NewManager("exec"),
 		projectPath:  projectPath,
-		shadowPath:   "",
 	}
-
+	b.hashTag = utils.RandStr(12)
 	dest := filepath.Join(
-		os.TempDir(), "BAKE_TMP", "PROJECT_TMP")
+		os.TempDir(), "BAKE_TMP", b.hashTag, "SHADOW_PROJECT")
 
 	err = b.duplicate(dest)
 	if err != nil {

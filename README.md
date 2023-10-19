@@ -48,9 +48,24 @@ pairs = ["darwin/arm64","windows/386"] #编译darwin/arm64和windows/386
 
 ⚠️*如果编译过程被中断，可能需要您手动清除**临时目录***
 
+## 远程编译
+
+### Docker
+
+bake可以远程连接Docker容器进行编译。
+
+```toml
+[recipes.docker_test]
+entrance="./"
+output="./build_by_docker_bin"
+all_platform.all_arch.docker.host="local" #使用本地docker
+all_platform.all_arch.docker.container="2a7c6546eea74b" #容器ID或容器名
+```
+
 ## Todo
 
 - [ ] 打包压缩文件
 - [ ] 直接执行命令
 - [ ] 更好的异常处理
-- [ ] 远程编译
+- [x] docker编译
+- [ ] ssh编译

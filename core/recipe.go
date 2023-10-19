@@ -1,9 +1,9 @@
 package core
 
 import (
+	"bake/core/remotes"
 	_ "embed"
 	"errors"
-
 	//. "github.com/B9O2/Inspector/templates/simple"
 	"github.com/B9O2/filefinder"
 	"strings"
@@ -52,12 +52,36 @@ func (orr *OptionReplace) Patch(por OptionReplace) OptionReplace {
 	return *orr
 }
 
-type Options struct {
-	ReplaceRule OptionReplace `toml:"replace"`
+type OptionDocker struct {
+	Host      string `toml:"host"`
+	Container string `toml:"container"`
+	Temp      string `toml:"temp""`
 }
 
+func (od *OptionDocker) Patch(patchOpt OptionDocker) OptionDocker {
+	if patchOpt.Host != "" {
+		od.Host = patchOpt.Host
+	}
+	if patchOpt.Container != "" {
+		od.Container = patchOpt.Container
+	}
+	if patchOpt.Temp != "" {
+		od.Temp = patchOpt.Temp
+	}
+	return *od
+}
+
+// Options 每对平台架构的具体设置
+type Options struct {
+	Name        string        //未启用
+	ReplaceRule OptionReplace `toml:"replace"`
+	Docker      OptionDocker  `toml:"docker"`
+}
+
+// Patch 对之前的选项进行补充
 func (opt *Options) Patch(patchOpt Options) Options {
 	opt.ReplaceRule = opt.ReplaceRule.Patch(patchOpt.ReplaceRule)
+	opt.Docker = opt.Docker.Patch(patchOpt.Docker)
 	return *opt
 }
 
@@ -94,6 +118,7 @@ func (r Recipe) ToConfig() (Config, error) {
 	if len(r.Pairs) <= 0 {
 		r.Pairs = strings.Split(AllPairs, "\n")
 	}
+	//在中间结构mid中初始化所有目标平台架构
 	for _, pair := range r.Pairs {
 		if platform, arch, ok := strings.Cut(pair, "/"); ok {
 			if _, ok = mid[platform]; !ok {
@@ -122,20 +147,34 @@ func (r Recipe) ToConfig() (Config, error) {
 		})
 	}
 
+	//遍历所有目标平台架构，应用全平台设置
 	for platform := range mid {
 		PatchOption(platform, r.AllPlatform)
 	}
 
+	//分别应用特殊平台设置
 	PatchOption("darwin", r.Darwin)
 	PatchOption("linux", r.Linux)
 	PatchOption("windows", r.Windows)
+
 	for platform, archOption := range mid {
 		for arch, option := range archOption {
-			cfg.Targets = append(cfg.Targets, BuildTarget{
+			bt := BuildPair{
 				Platform: platform,
 				Arch:     arch,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
-			})
+				Remote:   remotes.NewLocalTarget(platform, arch), //默认本地编译
+			}
+
+			if option.Docker.Host != "" {
+				bt.Remote = remotes.NewDockerTarget(option.Docker.Host,
+					option.Docker.Container,
+					option.Docker.Temp,
+					platform,
+					arch)
+			}
+
+			cfg.Targets = append(cfg.Targets, bt)
 		}
 	}
 

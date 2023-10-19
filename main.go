@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ShadowProject/core"
+	"bake/core"
 	"fmt"
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 )
 
-func BuildOne(target core.BuildTarget, entrance, output string) error {
-	b, err := core.NewGoProjectBuilder(".", "go")
+func BuildOne(pair core.BuildPair, entrance, output string) error {
+	b, err := core.NewGoProjectBuilder(".", "go", false)
 	if err != nil {
 		return err
 	}
@@ -18,21 +18,22 @@ func BuildOne(target core.BuildTarget, entrance, output string) error {
 		b.Close()
 		Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
 	}()
+
 	Insp.Print(Text("Shadow Project"), Path(b.ShadowPath()))
-	out := filepath.Join(b.ProjectPath(), output, target.Tag())
-	if err = b.GoVendor(target.Rule.DependencyReplace); err != nil {
+	output = filepath.Join(b.ProjectPath(), output)
+	if err = b.GoVendor(pair.Rule.DependencyReplace); err != nil {
 		Insp.Print(Error(err))
 		return err
 	}
-	if err = b.FileReplace(target.Rule.ReplacementWords, target.Rule.Range); err != nil {
+	if err = b.FileReplace(pair.Rule.ReplacementWords, pair.Rule.Range); err != nil {
 		Insp.Print(Error(err))
 		return err
 	}
-	err = b.BuildProject(entrance, target.Platform, target.Arch, out)
+	realOutput, err := b.BuildProject(entrance, output, pair)
 	if err != nil {
 		return err
 	} else {
-		Insp.Print(Text("Build Successfully", decorators.Green), Text(out))
+		Insp.Print(Text("Build Successfully", decorators.Green), Text(realOutput))
 	}
 	return nil
 }
@@ -55,9 +56,9 @@ func main() {
 			return
 		}
 		Insp.Print(Text("Entrance"), Text(config.Entrance, decorators.Blue))
-		for _, target := range config.Targets {
-			Insp.Print(Text("Build Target"), Text(target.Tag(), decorators.Yellow))
-			err = BuildOne(target, config.Entrance, config.Output)
+		for _, pair := range config.Targets {
+			Insp.Print(Text("Build Pair"), Text(pair.Tag(), decorators.Yellow), Text("<"+pair.Remote.Info()+">", decorators.Magenta))
+			err = BuildOne(pair, config.Entrance, config.Output)
 			if err != nil {
 				Insp.Print(Error(err))
 				continue
