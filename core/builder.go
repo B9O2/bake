@@ -1,7 +1,8 @@
 package core
 
 import (
-	"bake/core/utils"
+	"bake/core/recipe"
+	"bake/utils"
 	"bytes"
 	"errors"
 	Executor "github.com/B9O2/ExecManager"
@@ -14,12 +15,6 @@ import (
 	"strings"
 )
 
-type ReplaceRule struct {
-	DependencyReplace map[string]string
-	ReplacementWords  map[string]string
-	Range             *filefinder.SearchRule
-}
-
 type GoBuilder struct {
 	dev                     bool
 	executorPath            string
@@ -29,7 +24,7 @@ type GoBuilder struct {
 }
 
 // BuildProject 在影子目录中构建
-func (gb *GoBuilder) BuildProject(entrance, output string, pair BuildPair) (string, error) {
+func (gb *GoBuilder) BuildProject(entrance, output string, pair recipe.BuildPair) (string, error) {
 	shadowOutput := filepath.Join("./shadow_bin", pair.Name())
 	cmd := gb.executorPath
 	args := []string{ //不指定一定使用build
@@ -65,8 +60,9 @@ func (gb *GoBuilder) BuildProject(entrance, output string, pair BuildPair) (stri
 		}
 		return "", err
 	}
+	output = filepath.Join(output, pair.Name())
 	err = pair.Remote.CopyFileBack(shadowOutput, output)
-	return filepath.Join(output, pair.Name()), err
+	return output, err
 }
 
 // FileReplace 对影子目录中的文件内容进行替换
@@ -113,10 +109,10 @@ func (gb *GoBuilder) GoVendor(replacement map[string]string) error {
 		return err
 	}
 	if len(stdout) > 0 {
-		Insp.Print(Text(stdout, decorators.Cyan))
+		Insp.Print(Text(string(stdout), decorators.Cyan))
 	}
 	if len(stderr) > 0 {
-		Insp.Print(Text(stderr, decorators.Red))
+		Insp.Print(Text(string(stderr), decorators.Red))
 	}
 
 	if len(stderr) > 0 {
@@ -149,10 +145,15 @@ func (gb *GoBuilder) ProjectPath() string {
 	return gb.projectPath
 }
 
-func (gb *GoBuilder) Close() {
-	if gb.shadowPath != "" && !gb.dev {
-		os.RemoveAll(filepath.Join(gb.shadowPath, ".."))
+func (gb *GoBuilder) Close() error {
+	if !gb.dev {
+		if gb.shadowPath != "" {
+			return os.RemoveAll(filepath.Join(gb.shadowPath, ".."))
+		}
+	} else {
+		return errors.New("DevMode")
 	}
+	return nil
 }
 
 // NewGoProjectBuilder Go项目构建器，初始化构建器后会复制项目至影子目录（默认临时目录）

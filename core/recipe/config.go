@@ -1,6 +1,7 @@
-package core
+package recipe
 
 import (
+	"bake/core/recipe/options"
 	"bake/core/remotes"
 	"errors"
 	"fmt"
@@ -9,11 +10,12 @@ import (
 )
 
 type BuildPair struct {
-	fileName string
 	Platform string
 	Arch     string
-	Rule     ReplaceRule
+	Rule     options.ReplaceRule
 	Remote   remotes.RemoteTarget
+
+	fileName string
 }
 
 func (bp BuildPair) Tag() string {
@@ -34,9 +36,8 @@ func (bp BuildPair) Name() string {
 }
 
 type Config struct {
-	Targets  []BuildPair
-	Entrance string
-	Output   string
+	Targets          []BuildPair
+	Entrance, Output string
 }
 
 func LoadConfig(filePath, recipeName string) (Config, error) {

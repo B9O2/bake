@@ -1,7 +1,7 @@
 package remotes
 
 import (
-	"bake/core/utils"
+	"bake/utils"
 	"context"
 	"errors"
 	"fmt"
@@ -118,8 +118,7 @@ func (dt *DockerTarget) BuildExec(executor string, args []string) ([]byte, []byt
 }
 
 func (dt *DockerTarget) CopyFileBack(src, dest string) error {
-
-	tarData, _, err := dt.dc.CopyFromContainer(dt.ctx, dt.containerID, filepath.Join(dt.temp, src))
+	tarData, stat, err := dt.dc.CopyFromContainer(dt.ctx, dt.containerID, filepath.Join(dt.temp, "shadow_bin"))
 	if err != nil {
 		return err
 	}
@@ -146,7 +145,7 @@ func (dt *DockerTarget) CopyFileBack(src, dest string) error {
 		return err
 	}
 
-	return utils.CopyDirectory(tarUnpackPath, dest)
+	return utils.CopyFile(filepath.Join(tarUnpackPath, src), dest, stat.Mode)
 }
 
 func (dt *DockerTarget) ExecCommand(dir string, env []string, cmd string, args ...string) ([]byte, error) {

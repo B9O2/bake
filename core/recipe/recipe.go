@@ -1,93 +1,20 @@
-package core
+package recipe
 
 import (
+	"bake/core/recipe/options"
 	"bake/core/remotes"
 	_ "embed"
 	"errors"
-	//. "github.com/B9O2/Inspector/templates/simple"
-	"github.com/B9O2/filefinder"
+
 	"strings"
 )
 
 //go:embed static/PAIRS
 var AllPairs string
 
-type OptionReplace struct {
-	Dependency      map[string]string `toml:"dependency"`
-	Text            map[string]string `toml:"text"`
-	Dirs            []string          `toml:"dir_rules"`
-	FileNameRegexps []string          `toml:"file_regexps"`
-}
+type ArchOption map[string]options.Options
 
-func (orr *OptionReplace) ParseReplaceRule() ReplaceRule {
-	r := ReplaceRule{
-		DependencyReplace: orr.Dependency,
-		ReplacementWords:  orr.Text,
-	}
-
-	if len(orr.Dirs)+len(orr.FileNameRegexps) > 0 {
-		r.Range = &filefinder.SearchRule{
-			RuleName:        "OvO",
-			DirRules:        orr.Dirs,
-			FileNameRegexps: orr.FileNameRegexps,
-		}
-	}
-
-	return r
-}
-func (orr *OptionReplace) Patch(por OptionReplace) OptionReplace {
-	if orr.Dependency == nil {
-		orr.Dependency = map[string]string{}
-	}
-	for k, v := range por.Dependency {
-		orr.Dependency[k] = v
-	}
-
-	if orr.Text == nil {
-		orr.Text = map[string]string{}
-	}
-	for k, v := range por.Text {
-		orr.Text[k] = v
-	}
-	return *orr
-}
-
-type OptionDocker struct {
-	Host      string `toml:"host"`
-	Container string `toml:"container"`
-	Temp      string `toml:"temp""`
-}
-
-func (od *OptionDocker) Patch(patchOpt OptionDocker) OptionDocker {
-	if patchOpt.Host != "" {
-		od.Host = patchOpt.Host
-	}
-	if patchOpt.Container != "" {
-		od.Container = patchOpt.Container
-	}
-	if patchOpt.Temp != "" {
-		od.Temp = patchOpt.Temp
-	}
-	return *od
-}
-
-// Options 每对平台架构的具体设置
-type Options struct {
-	Name        string        //未启用
-	ReplaceRule OptionReplace `toml:"replace"`
-	Docker      OptionDocker  `toml:"docker"`
-}
-
-// Patch 对之前的选项进行补充
-func (opt *Options) Patch(patchOpt Options) Options {
-	opt.ReplaceRule = opt.ReplaceRule.Patch(patchOpt.ReplaceRule)
-	opt.Docker = opt.Docker.Patch(patchOpt.Docker)
-	return *opt
-}
-
-type ArchOption map[string]Options
-
-func (p ArchOption) Range(f func(arch string, option Options) bool) {
+func (p ArchOption) Range(f func(arch string, option options.Options) bool) {
 	for arch, option := range p {
 		if arch == "all_arch" {
 			continue
@@ -97,7 +24,7 @@ func (p ArchOption) Range(f func(arch string, option Options) bool) {
 		}
 	}
 }
-func (p ArchOption) AllArchOption() Options {
+func (p ArchOption) AllArchOption() options.Options {
 	option, _ := p["all_arch"]
 	return option
 }
@@ -114,7 +41,7 @@ type Recipe struct {
 
 func (r Recipe) ToConfig() (Config, error) {
 	cfg := Config{}
-	mid := map[string]map[string]Options{}
+	mid := map[string]map[string]options.Options{}
 	if len(r.Pairs) <= 0 {
 		r.Pairs = strings.Split(AllPairs, "\n")
 	}
@@ -122,9 +49,9 @@ func (r Recipe) ToConfig() (Config, error) {
 	for _, pair := range r.Pairs {
 		if platform, arch, ok := strings.Cut(pair, "/"); ok {
 			if _, ok = mid[platform]; !ok {
-				mid[platform] = map[string]Options{}
+				mid[platform] = map[string]options.Options{}
 			}
-			mid[platform][arch] = Options{}
+			mid[platform][arch] = options.Options{}
 		}
 	}
 
@@ -138,7 +65,7 @@ func (r Recipe) ToConfig() (Config, error) {
 				mid[platform][midArch] = midOption.Patch(opt)
 			}
 		}
-		ao.Range(func(arch string, option Options) bool {
+		ao.Range(func(arch string, option options.Options) bool {
 			if _, ok := mid[platform][arch]; ok {
 				midOption := mid[platform][arch]
 				mid[platform][arch] = midOption.Patch(option)
@@ -162,6 +89,7 @@ func (r Recipe) ToConfig() (Config, error) {
 			bt := BuildPair{
 				Platform: platform,
 				Arch:     arch,
+				fileName: option.Output.Path,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
 				Remote:   remotes.NewLocalTarget(platform, arch), //默认本地编译
 			}
@@ -184,11 +112,12 @@ func (r Recipe) ToConfig() (Config, error) {
 		cfg.Entrance = r.Entrance
 	}
 
-	if r.Output == "" {
-		cfg.Output = "bake_out"
-	} else {
+	if r.Output != "" {
 		cfg.Output = r.Output
+	} else {
+		cfg.Output = "bake_bin"
 	}
+
 	return cfg, nil
 }
 

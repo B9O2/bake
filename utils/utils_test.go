@@ -11,7 +11,7 @@ func TestTar(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
-	err = UnpackTar("./static.tar", "./OK", true, nil)
+	err = UnpackTar("./static.tar", "./OK", true)
 	if err != nil {
 		fmt.Println(err)
 		return

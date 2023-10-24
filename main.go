@@ -2,25 +2,27 @@ package main
 
 import (
 	"bake/core"
+	"bake/core/recipe"
 	"fmt"
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
 	"os"
-	"path/filepath"
 )
 
-func BuildOne(pair core.BuildPair, entrance, output string) error {
-	b, err := core.NewGoProjectBuilder(".", "go", false)
+func BuildOne(pair recipe.BuildPair, entrance, output string) error {
+	b, err := core.NewGoProjectBuilder(".", "go", true)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		b.Close()
-		Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
+		if err = b.Close(); err != nil {
+			Insp.Print(LEVEL_WARNING, Error(err), Path(b.ShadowPath()), Text("not clean"))
+		} else {
+			Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
+		}
 	}()
 
 	Insp.Print(Text("Shadow Project"), Path(b.ShadowPath()))
-	output = filepath.Join(b.ProjectPath(), output)
 	if err = b.GoVendor(pair.Rule.DependencyReplace); err != nil {
 		Insp.Print(Error(err))
 		return err
@@ -48,9 +50,9 @@ func main() {
 	} else {
 		recipes = []string{"default"}
 	}
-	for _, recipe := range recipes {
-		Insp.Print(Text("Follow Recipe"), Text(recipe, decorators.Magenta))
-		config, err := core.LoadConfig("./RECIPE.toml", recipe)
+	for _, r := range recipes {
+		Insp.Print(Text("Follow Recipe"), Text(r, decorators.Magenta))
+		config, err := recipe.LoadConfig("./RECIPE.toml", r)
 		if err != nil {
 			Insp.Print(Error(err))
 			return

@@ -1,7 +1,7 @@
 package remotes
 
 import (
-	"bake/core/utils"
+	"bake/utils"
 	Executor "github.com/B9O2/ExecManager"
 	"os"
 	"path/filepath"
@@ -45,8 +45,7 @@ func (lt *LocalTarget) BuildExec(cmd string, args []string) ([]byte, []byte, err
 }
 
 func (lt *LocalTarget) CopyFileBack(src, dest string) error {
-	_, filename := filepath.Split(src)
-	return utils.CopyFile(filepath.Join(lt.shadowPath, src), filepath.Join(dest, filename), 0660)
+	return utils.CopyFile(filepath.Join(lt.shadowPath, src), dest, 0660)
 }
 
 func (lt *LocalTarget) Info() string {
