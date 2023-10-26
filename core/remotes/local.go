@@ -51,7 +51,7 @@ func (lt *LocalTarget) CopyFileBack(src, dest string) error {
 func (lt *LocalTarget) Info() string {
 	return "Local Build"
 }
-func (lt *LocalTarget) Close() {}
+func (lt *LocalTarget) Close() error { return nil }
 
 func NewLocalTarget(platform, arch string) *LocalTarget {
 	return &LocalTarget{

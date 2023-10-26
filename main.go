@@ -10,7 +10,7 @@ import (
 )
 
 func BuildOne(pair recipe.BuildPair, entrance, output string) error {
-	b, err := core.NewGoProjectBuilder(".", "go", true)
+	b, err := core.NewGoProjectBuilder(".", "go", false)
 	if err != nil {
 		return err
 	}

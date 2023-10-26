@@ -97,6 +97,7 @@ func (r Recipe) ToConfig() (Config, error) {
 			if option.Docker.Host != "" {
 				bt.Remote = remotes.NewDockerTarget(option.Docker.Host,
 					option.Docker.Container,
+					option.Docker.Image,
 					option.Docker.Temp,
 					platform,
 					arch)

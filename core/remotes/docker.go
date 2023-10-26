@@ -2,12 +2,15 @@ package remotes
 
 import (
 	"bake/utils"
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"io"
 	"os"
@@ -17,13 +20,14 @@ import (
 
 // DockerTarget todo docker远程目标
 type DockerTarget struct {
-	host           string
-	temp           string
-	platform, arch string
-	dc             *client.Client
-	ctx            context.Context
-	shadowPath     string
-	containerID    string
+	host                 string
+	temp                 string
+	platform, arch       string
+	dc                   *client.Client
+	ctx                  context.Context
+	shadowPath           string
+	containerID, imageID string
+	removeContainer      bool
 }
 
 func (dt *DockerTarget) Connect() error {
@@ -52,27 +56,108 @@ func (dt *DockerTarget) Connect() error {
 	return nil
 }
 
-func (dt *DockerTarget) Close() {
-	_, _ = dt.ExecCommand("/", nil, "rm", "-rf", dt.temp)
-	_ = dt.dc.Close()
+func (dt *DockerTarget) Close() error {
+	if dt.removeContainer {
+		err := dt.dc.ContainerRemove(dt.ctx, dt.containerID, types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			RemoveLinks:   false,
+			Force:         true,
+		})
+		if err != nil {
+			Insp.Print(Text("Docker Remove", decorators.Red), Error(err))
+		} else {
+			Insp.Print(Text("Docker Remove", decorators.Green), Text("container '"+dt.containerID+"'("+dt.imageID+") removed"))
+		}
+	} else {
+		_, _ = dt.ExecCommand("/", nil, "rm", "-rf", dt.temp)
+	}
+	return dt.dc.Close()
 }
 
 func (dt *DockerTarget) Info() string {
 	return "Docker Build"
 }
 
-func (dt *DockerTarget) CopyShadowProjectTo(src string) error {
-	dt.shadowPath = src
-	if dt.containerID == "" {
-		return errors.New("container not set")
-	}
+func (dt *DockerTarget) CheckContainer() error {
 	stats, err := dt.dc.ContainerInspect(dt.ctx, dt.containerID)
+	if err == nil {
+		Insp.Print(Text("Container Find", decorators.Green), Text(fmt.Sprintf("%s(%s)", stats.Name, stats.ID), decorators.Cyan))
+		return nil
+	}
+	if dt.imageID == "" {
+		return errors.New("image not set")
+	}
+	//拉取镜像
+	Insp.Print(Text("Pull Image", decorators.Yellow), Text(dt.imageID))
+	out, err := dt.dc.ImagePull(dt.ctx, dt.imageID, types.ImagePullOptions{})
 	if err != nil {
 		return err
 	}
-	Insp.Print(Text("Container Find", decorators.Green), Text(fmt.Sprintf("%s(%s)", stats.Name, stats.ID), decorators.Cyan))
+	defer out.Close()
+
+	var jsonRaw []byte
+	for {
+		line := make([]byte, 1024)
+		n, err := out.Read(line)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+		jsonRaw = append(jsonRaw, line[:n]...)
+		jsons := bytes.Split(jsonRaw, []byte{'\n'})
+		s := map[string]interface{}{}
+		if len(jsons) > 0 {
+			for _, j := range jsons {
+				err := json.Unmarshal(j, &s)
+				if err != nil { //无论是未闭合串或空串都应当中断，继续读取
+					jsonRaw = j
+					break
+				}
+				jsonRaw = []byte{} //以防末尾无换行的单行json
+				if _, ok := s["status"]; ok {
+					Insp.JustPrint(Text(s["status"], decorators.Cyan), Text("\n"))
+					delete(s, "status")
+					for k, v := range s {
+						Insp.JustPrint(Text(" \\__ "+k+":", decorators.Blue), Text(fmt.Sprint(v)+"\n"))
+					}
+				} else {
+					Insp.Print(Text("Docker Response", decorators.Cyan), Text(fmt.Sprint(s)))
+				}
+			}
+
+		}
+	}
+	//启动容器
+	resp, err := dt.dc.ContainerCreate(dt.ctx, &container.Config{
+		Image: dt.imageID,
+		Cmd:   []string{"tail", "-f", "/dev/null"},
+	}, nil, nil, nil, "")
+	if err != nil {
+		return err
+	}
+
+	if err = dt.dc.ContainerStart(dt.ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		return err
+	}
+
+	dt.containerID = resp.ID
+
+	Insp.Print(Text("Container Started", decorators.Green), Text(resp.ID))
+
+	dt.removeContainer = true
+	return nil
+}
+
+func (dt *DockerTarget) CopyShadowProjectTo(src string) error {
+	dt.shadowPath = src
+	if err := dt.CheckContainer(); err != nil {
+		return err
+	}
+
 	tarPath := filepath.Join(src, "../shadow_tar")
-	err = utils.MakeTar(src, tarPath)
+	err := utils.MakeTar(src, tarPath)
 	if err != nil {
 		return err
 	}
@@ -180,10 +265,11 @@ func (dt *DockerTarget) ExecCommand(dir string, env []string, cmd string, args .
 	return output, nil
 }
 
-func NewDockerTarget(host, container, temp, platform, arch string) *DockerTarget {
+func NewDockerTarget(host, container, image, temp, platform, arch string) *DockerTarget {
 	dt := &DockerTarget{
 		host:        host,
 		containerID: container,
+		imageID:     image,
 		temp:        "/BAKE_DOCKER_TMP",
 		platform:    platform,
 		arch:        arch,
