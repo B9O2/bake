@@ -112,21 +112,16 @@ func (gb *GoBuilder) GoVendor(replacement map[string]string) error {
 		Insp.Print(Text(string(stdout), decorators.Cyan))
 	}
 	if len(stderr) > 0 {
-		Insp.Print(Text(string(stderr), decorators.Red))
-	}
-
-	if len(stderr) > 0 {
+		Insp.Print(LEVEL_WARNING, Text(string(stderr), decorators.Yellow))
 		if strings.Contains(string(stderr), "go.mod file not found") {
 			return errors.New("bake: It seems not a go project")
-		} else {
-			return errors.New("bake: vendor error")
 		}
 	}
 
 	for oldDependency, newDependency := range replacement {
 		err = os.Rename(filepath.Join(gb.shadowPath, "vendor", oldDependency), filepath.Join(gb.shadowPath, "vendor", newDependency))
 		if err != nil {
-
+			return err
 		}
 	}
 
