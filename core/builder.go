@@ -17,24 +17,22 @@ import (
 
 type GoBuilder struct {
 	dev                     bool
-	executorPath            string
+	builderPath             string
 	exec                    *Executor.Manager
 	projectPath, shadowPath string
 	hashTag                 string
 }
 
 // BuildProject 在影子目录中构建
-func (gb *GoBuilder) BuildProject(entrance, output string, pair recipe.BuildPair) (string, error) {
+func (gb *GoBuilder) BuildProject(args []string, entrance, output string, pair recipe.BuildPair) (string, error) {
 	shadowOutput := filepath.Join("./shadow_bin", pair.Name())
-	cmd := gb.executorPath
-	args := []string{ //不指定一定使用build
-		"-trimpath",
-		"-ldflags",
-		"-w -s",
+	cmd := gb.builderPath
+	args = append(args, []string{
 		"-o",
 		shadowOutput,
 		entrance,
-	}
+	}...)
+
 	err := pair.Remote.Connect()
 	if err != nil {
 		return "", err
@@ -100,7 +98,7 @@ func (gb *GoBuilder) FileReplace(replacement map[string]string, replaceRange *fi
 
 // GoVendor 对影子项目进行本地化依赖处理，在此过程中可以对依赖进行修改
 func (gb *GoBuilder) GoVendor(replacement map[string]string) error {
-	pid, err := gb.exec.NewProcess(gb.executorPath, []string{"mod", "vendor"}, gb.shadowPath)
+	pid, err := gb.exec.NewProcess(gb.builderPath, []string{"mod", "vendor"}, gb.shadowPath)
 	if err != nil {
 		return err
 	}
@@ -152,16 +150,16 @@ func (gb *GoBuilder) Close() error {
 }
 
 // NewGoProjectBuilder Go项目构建器，初始化构建器后会复制项目至影子目录（默认临时目录）
-func NewGoProjectBuilder(projectPath, executorPath string, dev bool) (*GoBuilder, error) {
+func NewGoProjectBuilder(projectPath, builderPath string, dev bool) (*GoBuilder, error) {
 	projectPath, err := filepath.Abs(projectPath)
 	if err != nil {
 		return nil, err
 	}
 	b := &GoBuilder{
-		dev:          dev,
-		executorPath: executorPath,
-		exec:         Executor.NewManager("exec"),
-		projectPath:  projectPath,
+		dev:         dev,
+		builderPath: builderPath,
+		exec:        Executor.NewManager("exec"),
+		projectPath: projectPath,
 	}
 	b.hashTag = utils.RandStr(12)
 	dest := filepath.Join(

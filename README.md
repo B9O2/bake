@@ -50,6 +50,18 @@ pairs = ["darwin/arm64","windows/386"] #编译darwin/arm64和windows/386
 
 ## 更多配置选项
 
+### 编译选项
+
+```toml
+[recipes.builder_test]
+entrance="./"
+output="./build_bin"
+builder.path="go"#使用环境变量中的go
+builder.args=["-trimpath","-ldflags","-w -s"]#bake默认参数
+```
+
+
+
 ### Docker编译
 
 bake可以远程连接Docker进行编译。

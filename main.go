@@ -9,8 +9,8 @@ import (
 	"os"
 )
 
-func BuildOne(pair recipe.BuildPair, entrance, output string) error {
-	b, err := core.NewGoProjectBuilder(".", "go", false)
+func BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
+	b, err := core.NewGoProjectBuilder(".", cfg.DefaultBuilderOption.Path, false)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func BuildOne(pair recipe.BuildPair, entrance, output string) error {
 		Insp.Print(Error(err))
 		return err
 	}
-	realOutput, err := b.BuildProject(entrance, output, pair)
+	realOutput, err := b.BuildProject(cfg.DefaultBuilderOption.Args, cfg.Entrance, cfg.Output, pair)
 	if err != nil {
 		return err
 	} else {
@@ -60,7 +60,7 @@ func main() {
 		Insp.Print(Text("Entrance"), Text(config.Entrance, decorators.Blue))
 		for _, pair := range config.Targets {
 			Insp.Print(Text("Build Pair"), Text(pair.Tag(), decorators.Yellow), Text("<"+pair.Remote.Info()+">", decorators.Magenta))
-			err = BuildOne(pair, config.Entrance, config.Output)
+			err = BuildOne(pair, config)
 			if err != nil {
 				Insp.Print(Error(err))
 				continue

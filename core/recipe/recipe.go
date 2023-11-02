@@ -30,17 +30,28 @@ func (p ArchOption) AllArchOption() options.Options {
 }
 
 type Recipe struct {
-	Entrance    string     `toml:"entrance"`
-	Output      string     `toml:"output"`
-	Pairs       []string   `toml:"pairs"`
-	AllPlatform ArchOption `toml:"all_platform"`
-	Darwin      ArchOption `toml:"darwin"`
-	Linux       ArchOption `toml:"linux"`
-	Windows     ArchOption `toml:"windows"`
+	Builder     options.OptionBuilder `toml:"builder"`
+	Entrance    string                `toml:"entrance"`
+	Output      string                `toml:"output"`
+	Pairs       []string              `toml:"pairs"`
+	AllPlatform ArchOption            `toml:"all_platform"`
+	Darwin      ArchOption            `toml:"darwin"`
+	Linux       ArchOption            `toml:"linux"`
+	Windows     ArchOption            `toml:"windows"`
 }
 
 func (r Recipe) ToConfig() (Config, error) {
-	cfg := Config{}
+	cfg := Config{
+		DefaultBuilderOption: options.OptionBuilder{
+			Path: "go",
+			Args: []string{
+				"-trimpath",
+				"-ldflags",
+				"-w -s",
+			},
+		},
+		Output: "bake_bin",
+	}
 	mid := map[string]map[string]options.Options{}
 	if len(r.Pairs) <= 0 {
 		r.Pairs = strings.Split(AllPairs, "\n")
@@ -113,10 +124,10 @@ func (r Recipe) ToConfig() (Config, error) {
 		cfg.Entrance = r.Entrance
 	}
 
+	cfg.DefaultBuilderOption.Patch(r.Builder)
+
 	if r.Output != "" {
 		cfg.Output = r.Output
-	} else {
-		cfg.Output = "bake_bin"
 	}
 
 	return cfg, nil
