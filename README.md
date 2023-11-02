@@ -109,4 +109,4 @@ darwin.arm64.output.path="hello/world/CoolApp_dawin_arm64" #设定输出目录�
   - [x] 指定镜像，自动下载启动编译
 - [ ] ssh编译
 - [x] 更好的异常处理
-- [ ] 指定go二进制程序(可替换支持混淆的编译工具)
+- [x] 指定go二进制程序(可替换支持混淆的编译工具)
