@@ -14,6 +14,7 @@ type BuildPair struct {
 	Arch     string
 	Rule     options.ReplaceRule
 	Remote   remotes.RemoteTarget
+	Builder  options.OptionBuilder
 
 	fileName string
 }

@@ -5,7 +5,6 @@ import (
 	"bake/core/remotes"
 	_ "embed"
 	"errors"
-
 	"strings"
 )
 
@@ -103,6 +102,7 @@ func (r Recipe) ToConfig() (Config, error) {
 				fileName: option.Output.Path,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
 				Remote:   remotes.NewLocalTarget(platform, arch), //默认本地编译
+				Builder:  option.Builder,
 			}
 
 			if option.Docker.Host != "" {
