@@ -29,26 +29,17 @@ func (p ArchOption) AllArchOption() options.Options {
 }
 
 type Recipe struct {
-	Builder     options.OptionBuilder `toml:"builder"`
-	Entrance    string                `toml:"entrance"`
-	Output      string                `toml:"output"`
-	Pairs       []string              `toml:"pairs"`
-	AllPlatform ArchOption            `toml:"all_platform"`
-	Darwin      ArchOption            `toml:"darwin"`
-	Linux       ArchOption            `toml:"linux"`
-	Windows     ArchOption            `toml:"windows"`
+	Entrance    string     `toml:"entrance"`
+	Output      string     `toml:"output"`
+	Pairs       []string   `toml:"pairs"`
+	AllPlatform ArchOption `toml:"all_platform"`
+	Darwin      ArchOption `toml:"darwin"`
+	Linux       ArchOption `toml:"linux"`
+	Windows     ArchOption `toml:"windows"`
 }
 
 func (r Recipe) ToConfig() (Config, error) {
 	cfg := Config{
-		DefaultBuilderOption: options.OptionBuilder{
-			Path: "go",
-			Args: []string{
-				"-trimpath",
-				"-ldflags",
-				"-w -s",
-			},
-		},
 		Output: "bake_bin",
 	}
 	mid := map[string]map[string]options.Options{}
@@ -102,8 +93,17 @@ func (r Recipe) ToConfig() (Config, error) {
 				fileName: option.Output.Path,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
 				Remote:   remotes.NewLocalTarget(platform, arch), //默认本地编译
-				Builder:  option.Builder,
+				Builder: options.OptionBuilder{
+					Path: "go",
+					Args: []string{
+						"-trimpath",
+						"-ldflags",
+						"-w -s",
+					},
+				},
 			}
+
+			bt.Builder.Patch(option.Builder)
 
 			if option.Docker.Host != "" {
 				bt.Remote = remotes.NewDockerTarget(option.Docker.Host,
@@ -123,8 +123,6 @@ func (r Recipe) ToConfig() (Config, error) {
 	} else {
 		cfg.Entrance = r.Entrance
 	}
-
-	cfg.DefaultBuilderOption.Patch(r.Builder)
 
 	if r.Output != "" {
 		cfg.Output = r.Output

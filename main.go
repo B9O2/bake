@@ -10,9 +10,7 @@ import (
 )
 
 func BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
-	builder := cfg.DefaultBuilderOption
-	builder.Patch(pair.Builder)
-	b, err := core.NewGoProjectBuilder(".", builder.Path, false)
+	b, err := core.NewGoProjectBuilder(".", pair.Builder.Path, false)
 	if err != nil {
 		return err
 	}
@@ -33,7 +31,7 @@ func BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
 		Insp.Print(Error(err))
 		return err
 	}
-	realOutput, err := b.BuildProject(builder.Args, cfg.Entrance, cfg.Output, pair)
+	realOutput, err := b.BuildProject(pair.Builder.Args, cfg.Entrance, cfg.Output, pair)
 	if err != nil {
 		return err
 	} else {

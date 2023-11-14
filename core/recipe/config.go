@@ -37,9 +37,8 @@ func (bp BuildPair) Name() string {
 }
 
 type Config struct {
-	Targets              []BuildPair
-	DefaultBuilderOption options.OptionBuilder
-	Entrance, Output     string
+	Targets          []BuildPair
+	Entrance, Output string
 }
 
 func LoadConfig(filePath, recipeName string) (Config, error) {
