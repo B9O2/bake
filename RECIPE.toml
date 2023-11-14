@@ -12,7 +12,6 @@ all_platform.all_arch.replace.text."google" = "apple" #替换代码文件内容
 entrance="./"
 output="./my_bin"
 pairs = ["windows/386"] #编译darwin/arm64和windows/386
-#all_platform.all_arch.replace.text."github" = "apple" #替换代码文件内容
 #all_platform.all_arch.docker.host="local"
 #darwin.arm64.docker.host="local"
 #darwin.arm64.output.path="hello/iam_darwin_arm64"

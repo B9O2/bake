@@ -56,8 +56,8 @@ pairs = ["darwin/arm64","windows/386"] #编译darwin/arm64和windows/386
 [recipes.builder_test]
 entrance="./"
 output="./build_bin"
-builder.path="go"#使用环境变量中的go
-builder.args=["-trimpath","-ldflags","-w -s"]#bake默认参数
+all_platform.all_arch.builder.path="go"#使用环境变量中的go
+all_platform.all_arch.builder.args=["-trimpath","-ldflags","-w -s"]#bake默认参数
 ```
 
 
