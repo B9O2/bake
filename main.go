@@ -1,72 +1,36 @@
 package main
 
 import (
-	"bake/core"
-	"bake/core/recipe"
 	"fmt"
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
+	"github.com/b9o2/tabby"
 	"os"
 )
-
-func BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
-	b, err := core.NewGoProjectBuilder(".", pair.Builder.Path, false)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err = b.Close(); err != nil {
-			Insp.Print(LEVEL_WARNING, Error(err), Path(b.ShadowPath()), Text("not clean"))
-		} else {
-			Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
-		}
-	}()
-
-	Insp.Print(Text("Shadow Project"), Path(b.ShadowPath()))
-	if err = b.GoVendor(pair.Rule.DependencyReplace); err != nil {
-		Insp.Print(Error(err))
-		return err
-	}
-	if err = b.FileReplace(pair.Rule.ReplacementWords, pair.Rule.Range); err != nil {
-		Insp.Print(Error(err))
-		return err
-	}
-	realOutput, err := b.BuildProject(pair.Builder.Args, cfg.Entrance, cfg.Output, pair)
-	if err != nil {
-		return err
-	} else {
-		Insp.Print(Text("Build Successfully", decorators.Green), Text(realOutput))
-	}
-	return nil
-}
 
 func main() {
 	defer func() {
 		Insp.Print(Text("Finished", decorators.Magenta))
 	}()
-	var recipes []string
+	var args []string
 	if len(os.Args) > 1 {
-		recipes = os.Args[1:]
+		args = os.Args[1:]
 	} else {
-		recipes = []string{"default"}
+		args = []string{"default"}
 	}
-	for _, r := range recipes {
-		Insp.Print(Text("Follow Recipe"), Text(r, decorators.Magenta))
-		config, err := recipe.LoadConfig("./RECIPE.toml", r)
-		if err != nil {
-			Insp.Print(Error(err))
-			return
-		}
-		Insp.Print(Text("Entrance"), Text(config.Entrance, decorators.Blue))
-		for _, pair := range config.Targets {
-			Insp.Print(Text("Build Pair"), Text(pair.Tag(), decorators.Yellow), Text("<"+pair.Remote.Info()+">", decorators.Magenta))
-			err = BuildOne(pair, config)
-			if err != nil {
-				Insp.Print(Error(err))
-				continue
-			}
-		}
+
+	ma := NewMainApp()
+	ma.SetParam("list", "", tabby.BOOL, "l")
+	ba := NewBuildApp()
+
+	t := tabby.NewTabby("Bake", ma)
+	t.SetUnknownApp(ba)
+	err := t.Run(args)
+	if err != nil {
+		Insp.Print(Error(err))
+		return
 	}
+
 }
 
 func init() {

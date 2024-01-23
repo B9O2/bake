@@ -230,7 +230,7 @@ func (dt *DockerTarget) CopyFileBack(src, dest string) error {
 		return err
 	}
 
-	return utils.CopyFile(filepath.Join(tarUnpackPath, src), dest, stat.Mode)
+	return utils.CopyFile(filepath.ToSlash(filepath.Join(tarUnpackPath, src)), dest, stat.Mode)
 }
 
 func (dt *DockerTarget) ExecCommand(dir string, env []string, cmd string, args ...string) ([]byte, error) {
