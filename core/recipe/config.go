@@ -3,10 +3,12 @@ package recipe
 import (
 	"bake/core/recipe/options"
 	"bake/core/remotes"
+	"bake/utils"
 	"errors"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"path/filepath"
+
+	"github.com/BurntSushi/toml"
 )
 
 type BuildPair struct {
@@ -41,19 +43,29 @@ type Config struct {
 	Entrance, Output string
 }
 
-func LoadConfig(filePath, recipeName string) (Config, error) {
+func LoadAllRecipes(filePath string) (map[string]Recipe, error) {
 	doc := RecipeDoc{}
-	if _, err := toml.DecodeFile(filePath, &doc); err != nil {
-		return Config{}, err
+	yes, err := utils.FileExists(filePath)
+	if !yes {
+		return map[string]Recipe{}, errors.New("Not a bake project, try 'bake init'")
 	}
-
-	if _, ok := doc.Recipes[recipeName]; !ok {
-		return Config{}, errors.New("recipe '" + recipeName + "' not found")
-	}
-	//fmt.Println(doc.Recipes[recipeName])
-	cfg, err := doc.Recipes[recipeName].ToConfig()
 	if err != nil {
-		return Config{}, err
+		return map[string]Recipe{}, err
 	}
-	return cfg, nil
+	if _, err := toml.DecodeFile(filePath, &doc); err != nil {
+		return map[string]Recipe{}, err
+	}
+	return doc.Recipes, nil
+}
+
+func LoadConfig(filePath, recipeName string) (Config, error) {
+	if recipes, err := LoadAllRecipes(filePath); err != nil {
+		return Config{}, err
+	} else {
+		cfg, err := recipes[recipeName].ToConfig()
+		if err != nil {
+			return Config{}, err
+		}
+		return cfg, nil
+	}
 }

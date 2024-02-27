@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//go:embed static/PAIRS
+//go:embed assets/PAIRS
 var AllPairs string
 
 type ArchOption map[string]options.Options
@@ -24,11 +24,11 @@ func (p ArchOption) Range(f func(arch string, option options.Options) bool) {
 	}
 }
 func (p ArchOption) AllArchOption() options.Options {
-	option, _ := p["all_arch"]
-	return option
+	return p["all_arch"]
 }
 
 type Recipe struct {
+	Desc        string     `toml:"desc"`
 	Entrance    string     `toml:"entrance"`
 	Output      string     `toml:"output"`
 	Pairs       []string   `toml:"pairs"`

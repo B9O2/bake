@@ -1,47 +1,23 @@
-package main
+package apps
 
 import (
 	"bake/core"
 	"bake/core/recipe"
-	"fmt"
+	"os"
+	"path"
+
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
 	"github.com/b9o2/tabby"
 )
 
-type MainApp struct {
-	*tabby.BaseApplication
-}
-
-func (ma *MainApp) Name() string {
-	return "Bake"
-}
-
-func (ma *MainApp) Main(arguments tabby.Arguments) error {
-	if show, err := arguments.Get("list"); err != nil {
-		return err
-	} else if show.(bool) {
-		fmt.Println("[Show all recipes]")
-		return nil
-	}
-
-	fmt.Println("[Other]")
-
-	return nil
-}
-
-func NewMainApp() *MainApp {
-	return &MainApp{
-		tabby.NewBaseApplication(nil),
-	}
-}
-
 type BuildApp struct {
 	*tabby.BaseApplication
+	ma *MainApp
 }
 
-func (ba *BuildApp) BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
-	b, err := core.NewGoProjectBuilder(".", pair.Builder.Path, false)
+func (ba *BuildApp) BuildOne(shadowBasePath string, pair recipe.BuildPair, cfg recipe.Config) error {
+	b, err := core.NewGoProjectBuilder(shadowBasePath, ".", pair.Builder.Path, false)
 	if err != nil {
 		return err
 	}
@@ -49,11 +25,11 @@ func (ba *BuildApp) BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
 		if err = b.Close(); err != nil {
 			Insp.Print(LEVEL_WARNING, Error(err), Path(b.ShadowPath()), Text("not clean"))
 		} else {
-			Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
+			//Insp.Print(LEVEL_INFO, Path(b.ShadowPath()), Text("cleaned"))
 		}
 	}()
 
-	Insp.Print(Text("Shadow Project"), Path(b.ShadowPath()))
+	//Insp.Print(Text("Shadow Project"), Path(b.ShadowPath()))
 	if err = b.GoVendor(pair.Rule.DependencyReplace); err != nil {
 		Insp.Print(Error(err))
 		return err
@@ -71,31 +47,40 @@ func (ba *BuildApp) BuildOne(pair recipe.BuildPair, cfg recipe.Config) error {
 	return nil
 }
 
-func (ba *BuildApp) Name() string {
-	return "Builder"
+func (ba *BuildApp) Detail() (string, string) {
+	return "build", "Bake Builder"
 }
 
-func (ba *BuildApp) Main(arguments tabby.Arguments) error {
-	for _, r := range arguments.AppPath()[1:] { //跳过根应用
+func (ba *BuildApp) Init(ma tabby.Application) error {
+	ba.ma = ma.(*MainApp)
+	return nil
+}
+
+func (ba *BuildApp) Main(args tabby.Arguments) error {
+	shadowBasePath := path.Join(os.TempDir(), "BAKE_TMP")
+	Insp.Print(Text("TempDir", decorators.Magenta), Path(shadowBasePath))
+	for _, r := range args.AppPath()[1:] { //跳过根应用
 		Insp.Print(Text("Follow Recipe"), Text(r, decorators.Magenta))
-		config, err := recipe.LoadConfig("./RECIPE.toml", r)
+		config, err := recipe.LoadConfig(ba.ma.GetRecipePath(), r)
 		if err != nil {
 			return err
 		}
 		Insp.Print(Text("Entrance"), Text(config.Entrance, decorators.Blue))
 		for _, pair := range config.Targets {
 			Insp.Print(Text("Build Pair"), Text(pair.Tag(), decorators.Yellow), Text("<"+pair.Remote.Info()+">", decorators.Magenta))
-			err = ba.BuildOne(pair, config)
+			err = ba.BuildOne(shadowBasePath, pair, config)
 			if err != nil {
 				Insp.Print(Error(err))
 				continue
 			}
 		}
 	}
+	Insp.Print(Text("Finished", decorators.Magenta))
 	return nil
 }
 func NewBuildApp() *BuildApp {
 	return &BuildApp{
 		tabby.NewBaseApplication(nil),
+		nil,
 	}
 }

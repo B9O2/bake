@@ -1,0 +1,5 @@
+[recipes.default]
+desc="Default Recipe"
+entrance="%s"
+pairs=["darwin/arm64","darwin/amd64","linux/386","linux/arm64","windows/386","windows/arm64"]
+output="./bake_bin"

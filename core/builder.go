@@ -5,14 +5,15 @@ import (
 	"bake/utils"
 	"bytes"
 	"errors"
-	Executor "github.com/B9O2/ExecManager"
-	"github.com/B9O2/Inspector/decorators"
-	. "github.com/B9O2/Inspector/templates/simple"
-	"github.com/B9O2/filefinder"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	Executor "github.com/B9O2/ExecManager"
+	"github.com/B9O2/Inspector/decorators"
+	. "github.com/B9O2/Inspector/templates/simple"
+	"github.com/B9O2/filefinder"
 )
 
 type GoBuilder struct {
@@ -150,7 +151,7 @@ func (gb *GoBuilder) Close() error {
 }
 
 // NewGoProjectBuilder Go项目构建器，初始化构建器后会复制项目至影子目录（默认临时目录）
-func NewGoProjectBuilder(projectPath, builderPath string, dev bool) (*GoBuilder, error) {
+func NewGoProjectBuilder(shadowBasePath, projectPath, builderPath string, dev bool) (*GoBuilder, error) {
 	projectPath, err := filepath.Abs(projectPath)
 	if err != nil {
 		return nil, err
@@ -163,7 +164,7 @@ func NewGoProjectBuilder(projectPath, builderPath string, dev bool) (*GoBuilder,
 	}
 	b.hashTag = utils.RandStr(12)
 	dest := filepath.Join(
-		os.TempDir(), "BAKE_TMP", b.hashTag, "SHADOW_PROJECT")
+		shadowBasePath, b.hashTag, "SHADOW_PROJECT")
 
 	err = b.duplicate(dest)
 	if err != nil {

@@ -3,6 +3,7 @@
 # 必要参数
 entrance="./" #编译入口，此处指定为当前目录
 # 非必要参数
+desc="Default Recipe"
 output="./bin" #编译输出目录
 all_platform.all_arch.replace.text."google" = "apple" #替换代码文件内容
 #|___平台___||__架构__||__操作__||_操作子项_|
