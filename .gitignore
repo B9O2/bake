@@ -24,3 +24,4 @@ go.work*
 .DS_Store
 .gitignore
 .idea
+release
