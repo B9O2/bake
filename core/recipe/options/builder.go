@@ -13,6 +13,10 @@ func (ob *OptionBuilder) Patch(patchOpt OptionBuilder) OptionBuilder {
 	if len(patchOpt.Args) > 0 {
 		ob.Args = patchOpt.Args
 	}
+
+	if ob.Env == nil {
+		ob.Env = map[string]string{}
+	}
 	for k, v := range patchOpt.Env {
 		ob.Env[k] = v
 	}
