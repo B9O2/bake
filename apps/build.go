@@ -56,14 +56,14 @@ func (ba *BuildApp) Init(ma tabby.Application) error {
 	return nil
 }
 
-func (ba *BuildApp) Main(args tabby.Arguments) error {
+func (ba *BuildApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 	shadowBasePath := path.Join(os.TempDir(), "BAKE_TMP")
 	Insp.Print(Text("TempDir", decorators.Magenta), Path(shadowBasePath))
 	for _, r := range args.AppPath()[1:] { //跳过根应用
 		Insp.Print(Text("Follow Recipe"), Text(r, decorators.Magenta))
 		config, err := recipe.LoadConfig(ba.ma.GetRecipePath(), r)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		Insp.Print(Text("Entrance"), Text(config.Entrance, decorators.Blue))
 		for _, pair := range config.Targets {
@@ -76,11 +76,11 @@ func (ba *BuildApp) Main(args tabby.Arguments) error {
 		}
 	}
 	Insp.Print(Text("Finished", decorators.Magenta))
-	return nil
+	return nil, nil
 }
 func NewBuildApp() *BuildApp {
 	return &BuildApp{
-		tabby.NewBaseApplication(nil),
+		tabby.NewBaseApplication(0, 0, nil),
 		nil,
 	}
 }

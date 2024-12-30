@@ -2,9 +2,10 @@ package remotes
 
 import (
 	"bake/utils"
-	Executor "github.com/B9O2/ExecManager"
 	"os"
 	"path/filepath"
+
+	Executor "github.com/B9O2/ExecManager"
 )
 
 type LocalTarget struct {
@@ -23,10 +24,15 @@ func (lt *LocalTarget) CopyShadowProjectTo(src string) error {
 	return nil
 }
 
-func (lt *LocalTarget) BuildExec(cmd string, args []string) ([]byte, []byte, error) {
+func (lt *LocalTarget) BuildExec(cmd string, args []string, env map[string]string) ([]byte, []byte, error) {
 	os.Setenv("CGO_ENABLED", "0")
 	os.Setenv("GOOS", lt.platform)
 	os.Setenv("GOARCH", lt.arch)
+
+	for k, v := range env {
+		os.Setenv(k, v)
+	}
+
 	pid, err := lt.exec.NewProcess(cmd, append([]string{"build"}, args...), lt.shadowPath)
 	if err != nil {
 		return nil, nil, err

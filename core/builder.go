@@ -47,7 +47,7 @@ func (gb *GoBuilder) BuildProject(args []string, entrance, output string, pair r
 	if err != nil {
 		return "", err
 	}
-	_, stderr, err := pair.Remote.BuildExec(cmd, args)
+	_, stderr, err := pair.Remote.BuildExec(cmd, args, pair.Builder.Env)
 	if err != nil {
 		return "", err
 	}

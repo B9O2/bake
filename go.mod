@@ -1,6 +1,6 @@
 module bake
 
-go 1.20
+go 1.21.6
 
 require (
 	github.com/B9O2/ExecManager v0.0.1
@@ -10,6 +10,7 @@ require (
 )
 
 require (
+	github.com/B9O2/canvas v0.0.3 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
@@ -31,7 +32,7 @@ require (
 require (
 	github.com/B9O2/NStruct v0.0.3 // indirect
 	github.com/BurntSushi/toml v1.3.2
-	github.com/b9o2/tabby v0.0.1
+	github.com/b9o2/tabby v0.0.3
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sys v0.12.0 // indirect

@@ -26,16 +26,16 @@ func (ma *MainApp) GetVersion() string {
 // 	return nil
 // }
 
-func (ma *MainApp) Main(args tabby.Arguments) error {
+func (ma *MainApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 	if args.Get("help").(bool) {
 		ma.Help("Bake" + " - " + ma.GetVersion())
 	}
-	return nil
+	return nil, nil
 }
 
 func NewMainApp(version, recipePath string, subApps ...tabby.Application) *MainApp {
 	return &MainApp{
-		tabby.NewBaseApplication(subApps),
+		tabby.NewBaseApplication(0, 0, subApps),
 		version,
 		recipePath,
 	}

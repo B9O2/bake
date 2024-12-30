@@ -7,15 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 // DockerTarget todo docker远程目标
@@ -182,12 +183,18 @@ func (dt *DockerTarget) CopyShadowProjectTo(src string) error {
 	return nil
 }
 
-func (dt *DockerTarget) BuildExec(executor string, args []string) ([]byte, []byte, error) {
-	output, err := dt.ExecCommand(dt.temp, []string{
+func (dt *DockerTarget) BuildExec(executor string, args []string, env map[string]string) ([]byte, []byte, error) {
+	enviorments := []string{
 		"CGO_ENABLED=0",
 		"GOOS=" + dt.platform,
 		"GOARCH=" + dt.arch,
-	}, executor, append([]string{"build", "-buildvcs=false"}, args...)...)
+	}
+
+	for k, v := range env {
+		enviorments = append(enviorments, k+"="+v)
+	}
+
+	output, err := dt.ExecCommand(dt.temp, enviorments, executor, append([]string{"build", "-buildvcs=false"}, args...)...)
 	if err != nil {
 		return nil, nil, err
 	}

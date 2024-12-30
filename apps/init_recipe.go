@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/B9O2/canvas/containers"
+	"github.com/B9O2/canvas/pixel"
 	"github.com/b9o2/tabby"
 )
 
@@ -20,11 +23,11 @@ func (ma *InitRecipeApp) Detail() (string, string) {
 	return "init", "Create a new config file (./RECIPE.toml)"
 }
 
-func (ma *InitRecipeApp) Main(args tabby.Arguments) error {
+func (ma *InitRecipeApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 	if args.Get("help").(bool) {
 		name, desc := ma.Detail()
 		ma.Help("[" + name + "] " + desc)
-		return nil
+		return nil, nil
 	}
 	entrance := args.Get("entrance")
 	if entrance == "" {
@@ -32,25 +35,39 @@ func (ma *InitRecipeApp) Main(args tabby.Arguments) error {
 	}
 
 	if _, err := os.Stat("RECIPE.toml"); err == nil {
-		return errors.New("RECIPE.toml already exists")
+		return nil, errors.New("RECIPE.toml already exists")
 	}
 
 	file, err := os.Create("RECIPE.toml")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(fmt.Sprintf(DefaultRecipe, entrance))
+	text := fmt.Sprintf(DefaultRecipe, entrance)
+	_, err = file.WriteString(text)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	//Canvas
+	parts := strings.Split(text, "\n")
+	height := uint(len(parts) + 4)
+
+	body := containers.NewVStack(containers.NewAsciiArt(parts))
+	body.SetFrame(0, 0, height, 0)
+	body.SetHPadding(2)
+	body.SetVPadding(1)
+	body.SetBorder(pixel.Dot)
+
+	vs := containers.NewVStack(containers.NewTextArea("RECIPE.toml"), body)
+	tc := tabby.NewTabbyContainer(100, height+1, vs)
+
+	return tc, nil
 }
 
 func NewInitRecipeApp() *InitRecipeApp {
 	return &InitRecipeApp{
-		tabby.NewBaseApplication(nil),
+		tabby.NewBaseApplication(0, 0, nil),
 	}
 }

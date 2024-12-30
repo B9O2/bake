@@ -5,6 +5,10 @@ github.com/B9O2/Inspector v0.0.12 h1:YO7gG+kwiIWAq5du0DiHAyDHnv9dhWu9ZaORIFHwkic
 github.com/B9O2/Inspector v0.0.12/go.mod h1:DmC6cyqhb8tEgHI63iRJA8Cv7rBgCP4+Hkc/Ya5iNXI=
 github.com/B9O2/NStruct v0.0.3 h1:bfSDCFLG30e8W5rmfTJDyuMhciyiYM3/pdUAD21IkfQ=
 github.com/B9O2/NStruct v0.0.3/go.mod h1:n39Dq+nLHIt8Fsua8CxxyyVGk/C7Xeoqow9MAdKR13U=
+github.com/B9O2/canvas v0.0.2 h1:chyEJ7R1Rx6AQFldgnAjyujmo8qZGNyw6HawMvtlwh8=
+github.com/B9O2/canvas v0.0.2/go.mod h1:GSMWTdkbZfQ5XB1kfu9R/jvaf/QQKSo2IJlz8bZfszs=
+github.com/B9O2/canvas v0.0.3 h1:y66IE61wSWSV1MULIo78bVrzvQwa2Gq991ZqKa5rnfo=
+github.com/B9O2/canvas v0.0.3/go.mod h1:GSMWTdkbZfQ5XB1kfu9R/jvaf/QQKSo2IJlz8bZfszs=
 github.com/B9O2/filefinder v0.0.1 h1:KqlW4EBFd0Egfzbcf+EiT5ahQrYIj7qQnGV9xzLOar0=
 github.com/B9O2/filefinder v0.0.1/go.mod h1:jA2ScOQdaxIlp+4WYoksBL/jfwtOr8Cb/9hiJF9Es+0=
 github.com/BurntSushi/toml v1.3.2 h1:o7IhLm0Msx3BaB+n3Ag7L8EVlByGnpq14C4YWiu/gL8=
@@ -15,6 +19,8 @@ github.com/b9o2/tabby v0.0.0-20240126103437-741d55cba602 h1:LCmfbRPdZ/GWw6c9UkJX
 github.com/b9o2/tabby v0.0.0-20240126103437-741d55cba602/go.mod h1:jE4ZNHw6sMf2mZ7GM3vL7RfT1lPCfDqiKS7y+Z0BYRs=
 github.com/b9o2/tabby v0.0.1 h1:JE+UvztRIoi5DezBsgljNBpFBRWUBt3oBlVdfoe0d/U=
 github.com/b9o2/tabby v0.0.1/go.mod h1:jE4ZNHw6sMf2mZ7GM3vL7RfT1lPCfDqiKS7y+Z0BYRs=
+github.com/b9o2/tabby v0.0.3 h1:r60VimyAAPmxj89QRwehLN56ewtrI9RyXz7dKSVE6m8=
+github.com/b9o2/tabby v0.0.3/go.mod h1:4RgI2vZznAT+Q3zQ+OXI2Fr5ZdB2HUHJUmK+2Ju3s8M=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/distribution/reference v0.5.0 h1:/FUIFXtfc/x2gpa5/VGfiGLuOIdYa1t65IKK2OFGvA0=
 github.com/distribution/reference v0.5.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=

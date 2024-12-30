@@ -21,10 +21,10 @@ func (lra *ListRecipesApp) Init(ma tabby.Application) error {
 	return nil
 }
 
-func (lra *ListRecipesApp) Main(args tabby.Arguments) error {
+func (lra *ListRecipesApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 	recipes, err := recipe.LoadAllRecipes(lra.ma.GetRecipePath())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Println("All Recipes:")
 	for name, recipe := range recipes {
@@ -35,12 +35,12 @@ func (lra *ListRecipesApp) Main(args tabby.Arguments) error {
 			fmt.Println()
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func NewListRecipesApp(subApps ...tabby.Application) *ListRecipesApp {
 	return &ListRecipesApp{
-		tabby.NewBaseApplication(subApps),
+		tabby.NewBaseApplication(0, 0, subApps),
 		nil,
 	}
 }

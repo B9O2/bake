@@ -7,11 +7,11 @@ import (
 
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
+	"github.com/B9O2/canvas/pixel"
 	"github.com/b9o2/tabby"
 )
 
 func main() {
-
 	var args []string
 	if len(os.Args) > 1 {
 		args = os.Args[1:]
@@ -32,12 +32,14 @@ func main() {
 	t := tabby.NewTabby("Bake", mainApp)
 
 	t.SetUnknownApp(buildApp)
-	err := t.Run(args)
+	tc, err := t.Run(args)
 	if err != nil {
 		Insp.Print(Error(err))
 		return
 	}
-
+	if tc != nil {
+		tc.Display(pixel.Space)
+	}
 }
 
 func init() {

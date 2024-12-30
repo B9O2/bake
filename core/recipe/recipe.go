@@ -100,6 +100,7 @@ func (r Recipe) ToConfig() (Config, error) {
 						"-ldflags",
 						"-w -s",
 					},
+					Env: map[string]string{},
 				},
 			}
 
