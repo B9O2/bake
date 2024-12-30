@@ -61,6 +61,7 @@ entrance="./"
 output="./build_bin"
 all_platform.all_arch.builder.path="go"#使用环境变量中的go
 all_platform.all_arch.builder.args=["-trimpath","-ldflags","-w -s"]#bake默认参数
+all_platform.all_arch.builder.env.ENV_NAME="ENV_ALUE"#设置环境变量
 ```
 
 ### Docker编译
