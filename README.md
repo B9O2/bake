@@ -2,6 +2,8 @@
 
 _基于配置文件的go项目打包工具。_支持替换依赖包名、docker编译等功能。
 
+## 安装
+`go install github.com/B9O2/bake`
 ## 流程
 
 1. 在项目文件夹下执行 `bake init` 初始化项目（生成*RECIPE.toml文件*）

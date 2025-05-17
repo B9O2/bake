@@ -34,9 +34,11 @@ func (ma *MainApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 }
 
 func NewMainApp(version, recipePath string, subApps ...tabby.Application) *MainApp {
-	return &MainApp{
+	app := &MainApp{
 		tabby.NewBaseApplication(0, 0, subApps),
 		version,
 		recipePath,
 	}
+	app.SetParam("help", "Show help messages", tabby.Bool(false), "h")
+	return app
 }

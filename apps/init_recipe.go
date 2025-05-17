@@ -67,7 +67,10 @@ func (ma *InitRecipeApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, erro
 }
 
 func NewInitRecipeApp() *InitRecipeApp {
-	return &InitRecipeApp{
+	app := &InitRecipeApp{
 		tabby.NewBaseApplication(0, 0, nil),
 	}
+	app.SetParam("entrance", "", tabby.String("."), "e")
+	app.SetParam("help", "Show help messages", tabby.Bool(false), "h")
+	return app
 }

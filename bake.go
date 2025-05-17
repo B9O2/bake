@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/B9O2/bake/apps"
 	"fmt"
 	"os"
+
+	"github.com/B9O2/bake/apps"
 
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
@@ -21,17 +22,12 @@ func main() {
 
 	buildApp := apps.NewBuildApp()
 	initRecipeApp := apps.NewInitRecipeApp()
-	initRecipeApp.SetParam("entrance", "", tabby.String("."), "e")
-	initRecipeApp.SetParam("help", "Show help messages", tabby.Bool(false), "h")
-
 	listRecipesApp := apps.NewListRecipesApp()
-
-	mainApp := apps.NewMainApp("0.1.1", "./RECIPE.toml", initRecipeApp, listRecipesApp)
-	mainApp.SetParam("help", "Show help messages", tabby.Bool(false), "h")
+	mainApp := apps.NewMainApp("0.1.2-beta", "./RECIPE.toml", initRecipeApp, listRecipesApp)
 
 	t := tabby.NewTabby("Bake", mainApp)
-
 	t.SetUnknownApp(buildApp)
+
 	tc, err := t.Run(args)
 	if err != nil {
 		Insp.Print(Error(err))
