@@ -1,8 +1,8 @@
 package core
 
 import (
-	"bake/core/recipe"
-	"bake/utils"
+	"github.com/B9O2/bake/core/recipe"
+	"github.com/B9O2/bake/utils"
 	"bytes"
 	"errors"
 	"io/fs"

@@ -1,7 +1,7 @@
-package remotes
+package targets
 
 import (
-	"bake/utils"
+	"github.com/B9O2/bake/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -21,12 +21,11 @@ import (
 
 // DockerTarget todo docker远程目标
 type DockerTarget struct {
+	*BaseTarget
 	host                 string
 	temp                 string
-	platform, arch       string
 	dc                   *client.Client
 	ctx                  context.Context
-	shadowPath           string
 	containerID, imageID string
 	removeContainer      bool
 }
@@ -274,12 +273,11 @@ func (dt *DockerTarget) ExecCommand(dir string, env []string, cmd string, args .
 
 func NewDockerTarget(host, container, image, temp, platform, arch string) *DockerTarget {
 	dt := &DockerTarget{
+		BaseTarget:  NewBaseTarget(platform, arch),
 		host:        host,
 		containerID: container,
 		imageID:     image,
 		temp:        "/BAKE_DOCKER_TMP",
-		platform:    platform,
-		arch:        arch,
 	}
 	if temp != "" {
 		dt.temp = temp

@@ -1,8 +1,8 @@
 package recipe
 
 import (
-	"bake/core/recipe/options"
-	"bake/core/remotes"
+	"github.com/B9O2/bake/core/recipe/options"
+	"github.com/B9O2/bake/core/targets"
 	_ "embed"
 	"errors"
 	"strings"
@@ -92,7 +92,7 @@ func (r Recipe) ToConfig() (Config, error) {
 				Arch:     arch,
 				fileName: option.Output.Path,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
-				Remote:   remotes.NewLocalTarget(platform, arch), //默认本地编译
+				Remote:   targets.NewLocalTarget(platform, arch), //默认本地编译
 				Builder: options.OptionBuilder{
 					Path: "go",
 					Args: []string{
@@ -107,7 +107,7 @@ func (r Recipe) ToConfig() (Config, error) {
 			bt.Builder.Patch(option.Builder)
 
 			if option.Docker.Host != "" {
-				bt.Remote = remotes.NewDockerTarget(option.Docker.Host,
+				bt.Remote = targets.NewDockerTarget(option.Docker.Host,
 					option.Docker.Container,
 					option.Docker.Image,
 					option.Docker.Temp,

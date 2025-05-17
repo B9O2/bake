@@ -1,8 +1,8 @@
 package apps
 
 import (
-	"bake/core"
-	"bake/core/recipe"
+	"github.com/B9O2/bake/core"
+	"github.com/B9O2/bake/core/recipe"
 	"os"
 	"path"
 

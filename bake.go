@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bake/apps"
+	"github.com/B9O2/bake/apps"
 	"fmt"
 	"os"
 

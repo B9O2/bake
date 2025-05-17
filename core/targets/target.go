@@ -1,6 +1,6 @@
-package remotes
+package targets
 
-type RemoteTarget interface {
+type Target interface {
 	Info() string
 	//Connect 连接远程编译目标
 	Connect() error
@@ -12,4 +12,16 @@ type RemoteTarget interface {
 	CopyFileBack(src, dest string) error
 	// Close 清理远程目标
 	Close() error
+}
+
+type BaseTarget struct {
+	platform, arch string
+	shadowPath     string
+}
+
+func NewBaseTarget(platform, arch string) *BaseTarget {
+	return &BaseTarget{
+		platform: platform,
+		arch:     arch,
+	}
 }

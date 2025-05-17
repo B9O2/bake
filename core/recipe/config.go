@@ -1,9 +1,9 @@
 package recipe
 
 import (
-	"bake/core/recipe/options"
-	"bake/core/remotes"
-	"bake/utils"
+	"github.com/B9O2/bake/core/recipe/options"
+	"github.com/B9O2/bake/core/targets"
+	"github.com/B9O2/bake/utils"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -15,7 +15,7 @@ type BuildPair struct {
 	Platform string
 	Arch     string
 	Rule     options.ReplaceRule
-	Remote   remotes.RemoteTarget
+	Remote   targets.Target
 	Builder  options.OptionBuilder
 
 	fileName string

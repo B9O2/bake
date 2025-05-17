@@ -1,17 +1,17 @@
-package remotes
+package targets
 
 import (
-	"bake/utils"
 	"os"
 	"path/filepath"
+
+	"github.com/B9O2/bake/utils"
 
 	Executor "github.com/B9O2/ExecManager"
 )
 
 type LocalTarget struct {
-	exec           *Executor.Manager
-	platform, arch string
-	shadowPath     string
+	*BaseTarget
+	exec *Executor.Manager
 }
 
 func (lt *LocalTarget) Connect() error {
@@ -61,7 +61,6 @@ func (lt *LocalTarget) Close() error { return nil }
 
 func NewLocalTarget(platform, arch string) *LocalTarget {
 	return &LocalTarget{
-		platform: platform,
-		arch:     arch,
+		BaseTarget: NewBaseTarget(platform, arch),
 	}
 }

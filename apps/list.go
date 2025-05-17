@@ -1,7 +1,7 @@
 package apps
 
 import (
-	"bake/core/recipe"
+	"github.com/B9O2/bake/core/recipe"
 	"fmt"
 
 	"github.com/b9o2/tabby"
