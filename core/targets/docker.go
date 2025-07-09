@@ -28,6 +28,7 @@ type DockerTarget struct {
 	ctx                  context.Context
 	containerID, imageID string
 	removeContainer      bool
+	stopContainer        bool
 }
 
 func (dt *DockerTarget) InitAndConnect(string) error {
@@ -70,6 +71,17 @@ func (dt *DockerTarget) Close() error {
 		}
 	} else {
 		_, _ = dt.ExecCommand("/", nil, "rm", "-rf", dt.temp)
+		if dt.stopContainer {
+			timeout := 5
+			if err := dt.dc.ContainerStop(dt.ctx, dt.containerID, container.StopOptions{
+				Signal:  "SIGTERM",
+				Timeout: &timeout, // 5秒超时
+			}); err != nil {
+				Insp.Print(Text("Docker Stop", decorators.Red), Error(err))
+			} else {
+				Insp.Print(Text("Docker Stop", decorators.Green), Text(dt.containerID, decorators.Cyan))
+			}
+		}
 	}
 	return dt.dc.Close()
 }
@@ -82,8 +94,19 @@ func (dt *DockerTarget) CheckContainer() error {
 	stats, err := dt.dc.ContainerInspect(dt.ctx, dt.containerID)
 	if err == nil {
 		Insp.Print(Text("Container Find", decorators.Green), Text(fmt.Sprintf("%s(%s)", stats.Name, stats.ID), decorators.Cyan))
+		if !stats.State.Running {
+			Insp.Print(Text("Container is not running, restarting...", decorators.Yellow))
+			if err = dt.dc.ContainerStart(dt.ctx, dt.containerID, container.StartOptions{}); err != nil {
+				return err
+			}
+			Insp.Print(Text("Container restarted", decorators.Green), Text(dt.containerID, decorators.Cyan))
+			dt.removeContainer = false //不删除主动重启的容器
+			dt.stopContainer = true
+			return nil
+		}
 		return nil
 	}
+
 	if dt.imageID == "" {
 		return errors.New("image not set")
 	}
@@ -167,6 +190,7 @@ func (dt *DockerTarget) BuildExec(executor string, args []string, env map[string
 		enviorments = append(enviorments, k+"="+v)
 	}
 
+	Insp.Print(Text("Command: "+executor, decorators.Cyan), Text("Args: "+strings.Join(args, " "), decorators.Cyan))
 	output, err := dt.ExecCommand(dt.temp, enviorments, executor, append([]string{"build", "-buildvcs=false"}, args...)...)
 	if err != nil {
 		return nil, nil, err
