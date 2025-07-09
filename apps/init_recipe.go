@@ -9,7 +9,7 @@ import (
 
 	"github.com/B9O2/canvas/containers"
 	"github.com/B9O2/canvas/pixel"
-	"github.com/b9o2/tabby"
+	"github.com/B9O2/tabby"
 )
 
 //go:embed assets/RECIPE.sample.toml
@@ -68,7 +68,7 @@ func (ma *InitRecipeApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, erro
 
 func NewInitRecipeApp() *InitRecipeApp {
 	app := &InitRecipeApp{
-		tabby.NewBaseApplication(0, 0, nil),
+		tabby.NewBaseApplication(false, nil),
 	}
 	app.SetParam("entrance", "", tabby.String("."), "e")
 	app.SetParam("help", "Show help messages", tabby.Bool(false), "h")

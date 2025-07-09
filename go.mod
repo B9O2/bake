@@ -7,7 +7,7 @@ toolchain go1.24.0
 require (
 	github.com/B9O2/ExecManager v0.0.1
 	github.com/B9O2/Inspector v0.0.12
-	github.com/B9O2/canvas v0.0.3
+	github.com/B9O2/canvas v0.0.4
 	github.com/B9O2/filefinder v0.0.4
 	github.com/alexmullins/zip v0.0.0-20180717182244-4affb64b04d0
 	github.com/docker/docker v24.0.6+incompatible
@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/B9O2/tabby v0.0.9 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
@@ -44,7 +45,6 @@ require (
 require (
 	github.com/B9O2/NStruct v0.0.3 // indirect
 	github.com/BurntSushi/toml v1.3.2
-	github.com/b9o2/tabby v0.0.3
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sys v0.32.0 // indirect

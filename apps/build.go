@@ -12,7 +12,7 @@ import (
 
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
-	"github.com/b9o2/tabby"
+	"github.com/B9O2/tabby"
 )
 
 type BuildApp struct {
@@ -134,7 +134,7 @@ func (ba *BuildApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 }
 func NewBuildApp() *BuildApp {
 	return &BuildApp{
-		tabby.NewBaseApplication(0, 0, nil),
+		tabby.NewBaseApplication(false, nil),
 		nil,
 	}
 }

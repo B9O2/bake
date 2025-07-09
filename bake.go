@@ -9,7 +9,7 @@ import (
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
 	"github.com/B9O2/canvas/pixel"
-	"github.com/b9o2/tabby"
+	"github.com/B9O2/tabby"
 )
 
 func main() {

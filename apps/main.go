@@ -1,7 +1,7 @@
 package apps
 
 import (
-	"github.com/b9o2/tabby"
+	"github.com/B9O2/tabby"
 )
 
 type MainApp struct {
@@ -35,10 +35,11 @@ func (ma *MainApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, error) {
 
 func NewMainApp(version, recipePath string, subApps ...tabby.Application) *MainApp {
 	app := &MainApp{
-		tabby.NewBaseApplication(0, 0, subApps),
+		tabby.NewBaseApplication(false, subApps),
 		version,
 		recipePath,
 	}
 	app.SetParam("help", "Show help messages", tabby.Bool(false), "h")
+
 	return app
 }

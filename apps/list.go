@@ -4,7 +4,7 @@ import (
 	"github.com/B9O2/bake/core/recipe"
 	"fmt"
 
-	"github.com/b9o2/tabby"
+	"github.com/B9O2/tabby"
 )
 
 type ListRecipesApp struct {
@@ -40,7 +40,7 @@ func (lra *ListRecipesApp) Main(args tabby.Arguments) (*tabby.TabbyContainer, er
 
 func NewListRecipesApp(subApps ...tabby.Application) *ListRecipesApp {
 	return &ListRecipesApp{
-		tabby.NewBaseApplication(0, 0, subApps),
+		tabby.NewBaseApplication(false, subApps),
 		nil,
 	}
 }
