@@ -63,7 +63,13 @@ func (ba *BuildApp) BuildOne(shadowBasePath string, pair recipe.BuildPair, cfg r
 		if err = utils.Zip(source, dest, pair.Output.Zip.Password); err != nil {
 			return err
 		}
-		Insp.Print(Text("Zipped Successfully", decorators.Green), Text(pair.Output.Zip.Dest, decorators.Magenta))
+
+		if pair.Output.Zip.Password != "" {
+			Insp.Print(Text("Zipped Successfully", decorators.Green), Text(pair.Output.Zip.Dest, decorators.Magenta), Text("[Protected]", decorators.Red))
+		} else {
+			Insp.Print(Text("Zipped Successfully", decorators.Green), Text(pair.Output.Zip.Dest, decorators.Magenta))
+		}
+
 	}
 
 	//SSH

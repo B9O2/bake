@@ -1,7 +1,6 @@
 package targets
 
 import (
-	"github.com/B9O2/bake/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -14,8 +13,9 @@ import (
 
 	"github.com/B9O2/Inspector/decorators"
 	. "github.com/B9O2/Inspector/templates/simple"
-	"github.com/docker/docker/api/types"
+	"github.com/B9O2/bake/utils"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
 
@@ -58,7 +58,7 @@ func (dt *DockerTarget) InitAndConnect(string) error {
 
 func (dt *DockerTarget) Close() error {
 	if dt.removeContainer {
-		err := dt.dc.ContainerRemove(dt.ctx, dt.containerID, types.ContainerRemoveOptions{
+		err := dt.dc.ContainerRemove(dt.ctx, dt.containerID, container.RemoveOptions{
 			RemoveVolumes: true,
 			RemoveLinks:   false,
 			Force:         true,
@@ -89,7 +89,7 @@ func (dt *DockerTarget) CheckContainer() error {
 	}
 	//拉取镜像
 	Insp.Print(Text("Pull Image", decorators.Yellow), Text(dt.imageID))
-	out, err := dt.dc.ImagePull(dt.ctx, dt.imageID, types.ImagePullOptions{})
+	out, err := dt.dc.ImagePull(dt.ctx, dt.imageID, image.PullOptions{})
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (dt *DockerTarget) CheckContainer() error {
 		return err
 	}
 
-	if err = dt.dc.ContainerStart(dt.ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err = dt.dc.ContainerStart(dt.ctx, resp.ID, container.StartOptions{}); err != nil {
 		return err
 	}
 
@@ -171,7 +171,7 @@ func (dt *DockerTarget) CopyShadowProjectTo(src string) error {
 		return err
 	}
 
-	err = dt.dc.CopyToContainer(dt.ctx, dt.containerID, dt.temp, f, types.CopyToContainerOptions{
+	err = dt.dc.CopyToContainer(dt.ctx, dt.containerID, dt.temp, f, container.CopyToContainerOptions{
 		AllowOverwriteDirWithFile: false,
 		CopyUIDGID:                false,
 	})
@@ -241,7 +241,7 @@ func (dt *DockerTarget) ExecCommand(dir string, env []string, cmd string, args .
 	cmds := append([]string{cmd}, args...)
 
 	// 创建一个容器执行请求
-	createResp, err := dt.dc.ContainerExecCreate(dt.ctx, dt.containerID, types.ExecConfig{
+	createResp, err := dt.dc.ContainerExecCreate(dt.ctx, dt.containerID, container.ExecOptions{
 		AttachStdout: true,
 		AttachStderr: true,
 		Cmd:          cmds,
@@ -253,7 +253,7 @@ func (dt *DockerTarget) ExecCommand(dir string, env []string, cmd string, args .
 	}
 
 	// 执行命令并获取输出
-	resp, err := dt.dc.ContainerExecAttach(dt.ctx, createResp.ID, types.ExecStartCheck{})
+	resp, err := dt.dc.ContainerExecAttach(dt.ctx, createResp.ID, container.ExecAttachOptions{})
 	if err != nil {
 		return nil, err
 	}
