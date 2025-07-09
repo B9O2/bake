@@ -2,12 +2,15 @@ package utils
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 	"unsafe"
 )
@@ -218,7 +221,7 @@ func FileExists(path string) (bool, error) {
 	return false, err
 }
 
-func SaveFile(path string, content []byte, cover bool) error {
+func SaveFile(path string, reader io.Reader, cover bool) error {
 	yes, _ := FileExists(path)
 	if yes { //已经存在
 		if cover {
@@ -229,7 +232,7 @@ func SaveFile(path string, content []byte, cover bool) error {
 			}
 			_ = f.Chmod(os.ModePerm)
 			defer f.Close()
-			_, err = f.Write(content)
+			_, err = io.Copy(f, reader)
 			if err != nil {
 				return err
 			}
@@ -251,7 +254,7 @@ func SaveFile(path string, content []byte, cover bool) error {
 		}
 		_ = file.Chmod(os.ModePerm)
 		defer file.Close()
-		_, err = file.Write(content)
+		_, err = io.Copy(file, reader)
 		if err != nil {
 			return errors.New("Create Failed:" + err.Error())
 		}
@@ -259,6 +262,11 @@ func SaveFile(path string, content []byte, cover bool) error {
 		return errors.New("invalid path")
 	}
 	return nil
+}
+
+// SaveFileFromBytes 从字节数组保存文件（兼容性函数）
+func SaveFileFromBytes(path string, content []byte, cover bool) error {
+	return SaveFile(path, bytes.NewReader(content), cover)
 }
 
 func RandStr(n int) string {
@@ -283,4 +291,12 @@ func RandStr(n int) string {
 		remain--
 	}
 	return *(*string)(unsafe.Pointer(&b))
+}
+
+func JoinStrings[T fmt.Stringer](elems []T, sep string) string {
+	strs := make([]string, len(elems))
+	for i, e := range elems {
+		strs[i] = e.String()
+	}
+	return strings.Join(strs, sep)
 }

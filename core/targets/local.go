@@ -14,7 +14,7 @@ type LocalTarget struct {
 	exec *Executor.Manager
 }
 
-func (lt *LocalTarget) Connect() error {
+func (lt *LocalTarget) InitAndConnect(string) error {
 	lt.exec = Executor.NewManager("LocalTargetExec")
 	return nil
 }

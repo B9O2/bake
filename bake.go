@@ -23,7 +23,7 @@ func main() {
 	buildApp := apps.NewBuildApp()
 	initRecipeApp := apps.NewInitRecipeApp()
 	listRecipesApp := apps.NewListRecipesApp()
-	mainApp := apps.NewMainApp("0.1.2-beta", "./RECIPE.toml", initRecipeApp, listRecipesApp)
+	mainApp := apps.NewMainApp("main", "./RECIPE.toml", initRecipeApp, listRecipesApp)
 
 	t := tabby.NewTabby("Bake", mainApp)
 	t.SetUnknownApp(buildApp)

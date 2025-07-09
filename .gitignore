@@ -25,3 +25,6 @@ go.work*
 .gitignore
 .idea
 release
+bake_bin/
+bake
+test/*

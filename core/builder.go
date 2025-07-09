@@ -1,14 +1,16 @@
 package core
 
 import (
-	"github.com/B9O2/bake/core/recipe"
-	"github.com/B9O2/bake/utils"
 	"bytes"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/B9O2/bake/core/recipe"
+	"github.com/B9O2/bake/utils"
 
 	Executor "github.com/B9O2/ExecManager"
 	"github.com/B9O2/Inspector/decorators"
@@ -34,21 +36,31 @@ func (gb *GoBuilder) BuildProject(args []string, entrance, output string, pair r
 		entrance,
 	}...)
 
-	err := pair.Remote.Connect()
+	err := pair.Remote.InitAndConnect(gb.hashTag)
 	if err != nil {
 		return "", err
 	}
 
 	if !gb.dev {
 		defer pair.Remote.Close()
+	} else {
+		Insp.Print(LEVEL_INFO, Text("Skipping Close method in development mode", decorators.Yellow))
 	}
 
 	err = pair.Remote.CopyShadowProjectTo(gb.shadowPath)
 	if err != nil {
 		return "", err
 	}
-	_, stderr, err := pair.Remote.BuildExec(cmd, args, pair.Builder.Env)
+	stdout, stderr, err := pair.Remote.BuildExec(cmd, args, pair.Builder.Env)
+	if gb.dev {
+		if len(stdout) > 0 {
+			Insp.Print(Text(string(stdout), decorators.Cyan))
+		}
+	}
 	if err != nil {
+		if len(stderr) > 0 {
+			err = fmt.Errorf("build execute failed: %s Detail: %s", err, string(stderr))
+		}
 		return "", err
 	}
 	if len(stderr) > 0 {

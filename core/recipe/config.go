@@ -1,12 +1,13 @@
 package recipe
 
 import (
-	"github.com/B9O2/bake/core/recipe/options"
-	"github.com/B9O2/bake/core/targets"
-	"github.com/B9O2/bake/utils"
 	"errors"
 	"fmt"
 	"path/filepath"
+
+	"github.com/B9O2/bake/core/recipe/options"
+	"github.com/B9O2/bake/core/targets"
+	"github.com/B9O2/bake/utils"
 
 	"github.com/BurntSushi/toml"
 )
@@ -16,9 +17,9 @@ type BuildPair struct {
 	Arch     string
 	Rule     options.ReplaceRule
 	Remote   targets.Target
-	Builder  options.OptionBuilder
 
-	fileName string
+	Builder options.OptionBuilder
+	Output  options.OptionOutput
 }
 
 func (bp BuildPair) Tag() string {
@@ -27,8 +28,8 @@ func (bp BuildPair) Tag() string {
 
 func (bp BuildPair) Name() string {
 	name := ""
-	if bp.fileName != "" {
-		name = bp.fileName
+	if bp.Output.Path != "" {
+		name = bp.Output.Path
 	} else {
 		name = bp.Tag()
 	}
@@ -39,6 +40,7 @@ func (bp BuildPair) Name() string {
 }
 
 type Config struct {
+	Debug            bool
 	Targets          []BuildPair
 	Entrance, Output string
 }

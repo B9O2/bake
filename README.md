@@ -106,11 +106,13 @@ darwin.arm64.output.path="hello/world/CoolApp_dawin_arm64" #设定输出目录�
 ## Todo
 
 - [ ] 输出
-  - [ ] 压缩
-- [ ] 直接执行命令
-- [ ] docker编译
+  - [x] ZIP压缩(可设置密码)
+  - [x] SFTP
+  - [ ] S3
+- [ ] 直接执行命令(?)
+- [X] docker编译
   - [X] 指定容器编译
   - [X] 指定镜像，自动下载启动编译
-- [ ] ssh编译
+- [x] ssh编译
 - [X] 更好的异常处理
 - [X] 指定go二进制程序(可替换支持混淆的编译工具)

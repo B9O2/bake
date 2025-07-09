@@ -30,7 +30,7 @@ type DockerTarget struct {
 	removeContainer      bool
 }
 
-func (dt *DockerTarget) Connect() error {
+func (dt *DockerTarget) InitAndConnect(string) error {
 	var options []client.Opt
 	var err error
 	if dt.host == "" {
@@ -214,14 +214,9 @@ func (dt *DockerTarget) CopyFileBack(src, dest string) error {
 		return err
 	}
 
-	all, err := io.ReadAll(tarData)
-	if err != nil {
-		return err
-	}
-
 	tarPath := filepath.Join(dt.shadowPath, "../docker_return_tar")
 
-	err = utils.SaveFile(tarPath, all, true)
+	err = utils.SaveFile(tarPath, tarData, true)
 	if err != nil {
 		return err
 	}

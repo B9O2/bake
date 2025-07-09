@@ -1,11 +1,13 @@
 package recipe
 
 import (
-	"github.com/B9O2/bake/core/recipe/options"
-	"github.com/B9O2/bake/core/targets"
 	_ "embed"
 	"errors"
 	"strings"
+
+	"github.com/B9O2/bake/core/recipe/options"
+	"github.com/B9O2/bake/core/targets"
+	"github.com/B9O2/bake/utils"
 )
 
 //go:embed assets/PAIRS
@@ -28,6 +30,7 @@ func (p ArchOption) AllArchOption() options.Options {
 }
 
 type Recipe struct {
+	Debug       bool       `toml:"debug"`
 	Desc        string     `toml:"desc"`
 	Entrance    string     `toml:"entrance"`
 	Output      string     `toml:"output"`
@@ -40,6 +43,7 @@ type Recipe struct {
 
 func (r Recipe) ToConfig() (Config, error) {
 	cfg := Config{
+		Debug:  r.Debug,
 		Output: "bake_bin",
 	}
 	mid := map[string]map[string]options.Options{}
@@ -87,10 +91,9 @@ func (r Recipe) ToConfig() (Config, error) {
 
 	for platform, archOption := range mid {
 		for arch, option := range archOption {
-			bt := BuildPair{
+			bp := BuildPair{
 				Platform: platform,
 				Arch:     arch,
-				fileName: option.Output.Path,
 				Rule:     option.ReplaceRule.ParseReplaceRule(),
 				Remote:   targets.NewLocalTarget(platform, arch), //默认本地编译
 				Builder: options.OptionBuilder{
@@ -104,10 +107,12 @@ func (r Recipe) ToConfig() (Config, error) {
 				},
 			}
 
-			bt.Builder.Patch(option.Builder)
+			bp.Output.Patch(option.Output)
+			bp.Builder.Patch(option.Builder)
 
+			//配置了Docker目标
 			if option.Docker.Host != "" {
-				bt.Remote = targets.NewDockerTarget(option.Docker.Host,
+				bp.Remote = targets.NewDockerTarget(option.Docker.Host,
 					option.Docker.Container,
 					option.Docker.Image,
 					option.Docker.Temp,
@@ -115,7 +120,26 @@ func (r Recipe) ToConfig() (Config, error) {
 					arch)
 			}
 
-			cfg.Targets = append(cfg.Targets, bt)
+			//配置了SSH目标
+			if option.SSH.Host != "" {
+				sshCfg := &utils.SSHAuthConfig{
+					User:               option.SSH.User,
+					Password:           option.SSH.Password,
+					PrivateKeyPath:     option.SSH.PrivateKeyPath,
+					PrivateKeyPassword: option.SSH.PrivateKeyPassword,
+				}
+				
+				bp.Remote = targets.NewSSHTargetWithConfig(
+					option.SSH.Host,
+					option.SSH.Port,
+					option.SSH.Temp,
+					platform,
+					arch,
+					sshCfg,
+				)
+			}
+
+			cfg.Targets = append(cfg.Targets, bp)
 		}
 	}
 
