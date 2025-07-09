@@ -1,9 +1,7 @@
 package targets
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +15,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/moby/term"
 )
 
 // DockerTarget todo docker远程目标
@@ -88,47 +88,21 @@ func (dt *DockerTarget) CheckContainer() error {
 		return errors.New("image not set")
 	}
 	//拉取镜像
-	Insp.Print(Text("Pull Image", decorators.Yellow), Text(dt.imageID))
+	Insp.Print(Text("Pulling Image", decorators.Yellow), Text(dt.imageID, decorators.Cyan))
 	out, err := dt.dc.ImagePull(dt.ctx, dt.imageID, image.PullOptions{})
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 
-	var jsonRaw []byte
-	for {
-		line := make([]byte, 1024)
-		n, err := out.Read(line)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
-		}
-		jsonRaw = append(jsonRaw, line[:n]...)
-		jsons := bytes.Split(jsonRaw, []byte{'\n'})
-		s := map[string]interface{}{}
-		if len(jsons) > 0 {
-			for _, j := range jsons {
-				err := json.Unmarshal(j, &s)
-				if err != nil { //无论是未闭合串或空串都应当中断，继续读取
-					jsonRaw = j
-					break
-				}
-				jsonRaw = []byte{} //以防末尾无换行的单行json
-				if _, ok := s["status"]; ok {
-					Insp.JustPrint(Text(s["status"], decorators.Cyan), Text("\n"))
-					delete(s, "status")
-					for k, v := range s {
-						Insp.JustPrint(Text(" \\__ "+k+":", decorators.Blue), Text(fmt.Sprint(v)+"\n"))
-					}
-				} else {
-					Insp.Print(Text("Docker Response", decorators.Cyan), Text(fmt.Sprint(s)))
-				}
-			}
-
-		}
+	// 使用官方推荐的 jsonmessage 来美化输出
+	termFd, isTerm := term.GetFdInfo(os.Stderr)
+	err = jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+	if err != nil {
+		return err
 	}
+
+	Insp.Print(Text("Image pulled successfully", decorators.Green), Text(dt.imageID, decorators.Cyan))
 	//启动容器
 	resp, err := dt.dc.ContainerCreate(dt.ctx, &container.Config{
 		Image: dt.imageID,
