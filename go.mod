@@ -8,7 +8,7 @@ require (
 	github.com/B9O2/ExecManager v0.0.1
 	github.com/B9O2/Inspector v0.0.12
 	github.com/B9O2/canvas v0.0.3
-	github.com/B9O2/filefinder v0.0.1
+	github.com/B9O2/filefinder v0.0.4
 	github.com/alexmullins/zip v0.0.0-20180717182244-4affb64b04d0
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51

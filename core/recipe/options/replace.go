@@ -1,6 +1,10 @@
 package options
 
-import "github.com/B9O2/filefinder"
+import (
+	"regexp"
+
+	"github.com/B9O2/filefinder"
+)
 
 // OptionReplace 替换选项
 type OptionReplace struct {
@@ -15,22 +19,35 @@ type ReplaceRule struct {
 	Range             *filefinder.SearchRule
 }
 
-func (orr *OptionReplace) ParseReplaceRule() ReplaceRule {
+func (orr *OptionReplace) ParseReplaceRule() (ReplaceRule, error) {
 	r := ReplaceRule{
 		DependencyReplace: orr.Dependency,
 		ReplacementWords:  orr.Text,
+	}
+
+	var fileNameRegexps []*regexp.Regexp
+
+	for _, fileNameRegexp := range orr.FileNameRegexps {
+		if fileNameRegexp != "" {
+			re, err := regexp.Compile(fileNameRegexp)
+			if err != nil {
+				return r, err
+			}
+			fileNameRegexps = append(fileNameRegexps, re)
+		}
 	}
 
 	if len(orr.Dirs)+len(orr.FileNameRegexps) > 0 {
 		r.Range = &filefinder.SearchRule{
 			RuleName:        "OvO",
 			DirRules:        orr.Dirs,
-			FileNameRegexps: orr.FileNameRegexps,
+			FileNameRegexps: fileNameRegexps,
 		}
 	}
 
-	return r
+	return r, nil
 }
+
 func (orr *OptionReplace) Patch(por OptionReplace) OptionReplace {
 	if orr.Dependency == nil {
 		orr.Dependency = map[string]string{}

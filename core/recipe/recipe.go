@@ -91,10 +91,15 @@ func (r Recipe) ToConfig() (Config, error) {
 
 	for platform, archOption := range mid {
 		for arch, option := range archOption {
+			rr, err := option.ReplaceRule.ParseReplaceRule()
+			if err != nil {
+				return cfg, err
+			}
+
 			bp := BuildPair{
 				Platform: platform,
 				Arch:     arch,
-				Rule:     option.ReplaceRule.ParseReplaceRule(),
+				Rule:     rr,
 				Remote:   targets.NewLocalTarget(platform, arch), //默认本地编译
 				Builder: options.OptionBuilder{
 					Path: "go",
@@ -128,7 +133,7 @@ func (r Recipe) ToConfig() (Config, error) {
 					PrivateKeyPath:     option.SSH.PrivateKeyPath,
 					PrivateKeyPassword: option.SSH.PrivateKeyPassword,
 				}
-				
+
 				bp.Remote = targets.NewSSHTargetWithConfig(
 					option.SSH.Host,
 					option.SSH.Port,

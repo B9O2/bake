@@ -40,7 +40,7 @@ output="./my_bin"
 pairs = ["darwin/arm64","windows/386"] #编译darwin/arm64和windows/386
 ```
 
-其中*default*配置看起来稍显复杂，Line3是以编译目标为单位对原始项目的内容进行替换。
+其中*default*配置看起来稍显复杂，设置了以编译目标为单位对原始项目的内容进行替换。
 
 例如：*darwin平台的arm64架构替换文本"google"为"apple"*写成配置就是 `darwin.arm64.replace.text."google" = "apple"`，而示例中的配置则以*all_platform*与*all_arch*指代了全部内置平台与架构。
 

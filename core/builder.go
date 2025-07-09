@@ -79,20 +79,23 @@ func (gb *GoBuilder) BuildProject(args []string, entrance, output string, pair r
 // FileReplace 对影子目录中的文件内容进行替换
 func (gb *GoBuilder) FileReplace(replacement map[string]string, replaceRange *filefinder.SearchRule) error {
 	//Replace Range
-	var files []string
 	if replaceRange != nil {
 		db, err := filefinder.NewFileDB(gb.shadowPath)
 		if err != nil {
 			return err
 		}
-		files = db.Search([]filefinder.SearchRule{*replaceRange})["OvO"]
-		for _, filePath := range files {
-			content, _ := os.ReadFile(filePath)
-			for oldWord, newWord := range replacement {
-				content = bytes.Replace(content, []byte(oldWord), []byte(newWord), -1)
+
+		results := db.Search([]*filefinder.SearchRule{replaceRange})["OvO"]
+		for _, files := range results {
+			for _, filePath := range files {
+				content, _ := os.ReadFile(filePath)
+				for oldWord, newWord := range replacement {
+					content = bytes.Replace(content, []byte(oldWord), []byte(newWord), -1)
+				}
+				_ = os.WriteFile(filePath, content, 0666)
 			}
-			_ = os.WriteFile(filePath, content, 0666)
 		}
+
 	} else {
 		err := filepath.WalkDir(gb.shadowPath, func(filePath string, d fs.DirEntry, err error) error {
 			content, _ := os.ReadFile(filePath)
